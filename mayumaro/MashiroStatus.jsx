@@ -3,33 +3,34 @@
 // 배경·마시로 이미지는 bgSrc, spriteSrc에 주소를 넣으면 교체된다. 비워두면 코드로 그린 임시 도트가 나온다.
 // 숨은 기능: 마시로를 5번 연속으로 누르면 비공개 스탯 창이 열린다.
 // userConfessed ~ married: 숨은 연애 상태. 화면에 표시하지 않는다. 대화 기록의 상태창 코드로만 확인한다.
+// nextUpdate(다음 루넬 갱신일), material(원고 재료 메모): 숨은 값. 화면에 표시하지 않는다.
 
 function MashiroStatus(props = {}) {
   const {
     time = "23:41",
-    date = "10/31",
-    weekday = "金",
+    date = "10/29",
+    weekday = "목",
     weather = "비",
     location = "덴노지 맨션",
     stage = "작화",
     statusText = "",
-    episode = 5,
+    episode = 26,
     progress = 62,
     deadline = 3,
     research = 2,
     bubble = "펜선|+3P",
-    mashiroFace = "(´；ω；`)",
+    mashiroFace = "(╥﹏╥)φ",
     mashiroStatus = "마감 3일 전, 수면 부족",
     mashiroOutfit = "목 늘어난 회색 후드",
     userName = "당신",
-    userFace = "(・ω・)",
+    userFace = "٩(ˊᗜˋ*)و ♡",
     userStatus = "평소대로",
     userOutfit = "니트 카디건",
-    nextDate = "11/2(日) 15:00",
+    nextDate = "10/31(土) 15:00",
     nextPlan = "콘티 p.3 재현 — 손 잡고 걷기",
-    todos = ["5화 밑그림 끝내기|done", "펜선 10p까지", "그분께 답장하기 (…보낼 수 있을까)"],
+    todos = ["26화 밑그림 끝내기|done", "펜선 10p까지", "그분께 답장하기 (…보낼 수 있을까)"],
     memo = "손 크기 비교 자료 필요한데… 직접…? 아니 무리무리",
-    summary = "마감 3일 전, 비 오는 밤. 마시로는 작업실에서 5화 펜선을 넣는 중이다. 이틀 뒤 취재를 앞두고 콘티를 볼 때마다 손이 멈춘다.",
+    summary = "마감 3일 전, 비 오는 밤. 마시로는 작업실에서 26화 펜선을 넣는 중이다. 이틀 뒤 취재를 앞두고 콘티를 볼 때마다 손이 멈춘다.",
     trust = 46,
     affection = 52,
     phase = 4,
@@ -40,6 +41,8 @@ function MashiroStatus(props = {}) {
     dating = false,
     brokeUp = false,
     married = false,
+    nextUpdate = "11/2",
+    material = "우산 속에서 닿은 어깨, 빨개진 귀",
     bgSrc = "",
     spriteSrc = "",
     defaultOpen = false
