@@ -148,12 +148,13 @@ function MashiroStatus(props = {}) {
       {rs !== null ? nbox("취재", rs, C.blue) : null}
     </>
   );
-  const stageChip = (
-    <span className="ms-step ms-now" style={{ padding: "1px 7px", fontSize: 12 }}>
+  const stageChipOf = (withText) => (
+    <span className="ms-step ms-now" style={{ padding: withText ? "1px 7px" : "1px 5px", fontSize: 12, flex: "none" }} title={status} aria-label={status}>
       <MsPix d={MS_ICON[["script", "camera", "pen", "flag", "flag"][stageIdx]]} w={8} h={9} s={1.5} />
-      {status}
+      {withText ? status : null}
     </span>
   );
+  const stageChip = stageChipOf(true);
   const toggleBtn = (
     <button type="button" className="ms-cbtn" onClick={() => { setOpen(!open); setPopup(null); }} aria-label={open ? "접기" : "펼치기"} aria-expanded={open}>
       <span style={{ display: "inline-block", transform: open ? "rotate(180deg)" : "none" }}>
@@ -174,13 +175,14 @@ function MashiroStatus(props = {}) {
     </div>
   ) : (
     <div className="ms-cbar" style={{ display: "block" }}>
+      {/* 좁은 화면: 폭에 따라 1줄을 줄인다. 380px 이상 = 얼굴·날짜·단계·펼치기 / 345px 이상 = 얼굴 빼기 / 그보다 좁으면 단계는 아이콘만. */}
       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-        <span className="ms-mini"><MsPix d={MS_ICON.face} w={16} h={16} s={2} /></span>
+        {width >= 380 ? <span className="ms-mini"><MsPix d={MS_ICON.face} w={16} h={16} s={2} /></span> : null}
         {dateChip(false, false)}
-        {stageChip}
+        {stageChipOf(width >= 345)}
         <span style={{ marginLeft: "auto" }}>{toggleBtn}</span>
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5 }}>
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 6, marginTop: 5 }}>
         {weatherChip(true)}
         {ddays}
       </div>
@@ -338,7 +340,7 @@ function MashiroStatus(props = {}) {
         <>
           <div className="ms-toprow-sp ms-drop">
             {dateChip(true, false)}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, minWidth: 0, marginLeft: 8 }}>
               {weatherChip(false)}
               <div style={{ display: "flex", gap: 6 }}>{ddays}</div>
             </div>
