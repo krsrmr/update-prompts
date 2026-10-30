@@ -1,7 +1,7 @@
 // 필요 훅: useState, useEffect, useRef (react)
 // 마시로 상태창. 접힘/펼침, PC(넓은 화면)·모바일(좁은 화면) 배치가 자동으로 바뀐다.
 // 배경·마시로 이미지는 기본으로 사이트(mayumaro.vercel.app/img/status/)에서 불러온다.
-// bgSrc, spriteDraw/Think/Sleep/Empty, effDraw/effSleep로 주소를 바꿀 수 있다. 하나라도 못 불러오면 코드로 그린 임시 도트로 돌아간다.
+// bgSrc, spriteDraw/Think/Sleep/Empty, effDraw/effSleep로 주소를 바꿀 수 있다. bgSrc를 비우면 코드로 그린 임시 도트가 나온다.
 // 단계별 그림: 시나리오=think, 취재=empty(빈 의자), 작화=draw, 마감·완료=sleep. 위치는 PSD(1268×1268) 배치 기준.
 // 숨은 기능: 마시로를 5번 연속으로 누르면 비공개 스탯 창이 열린다.
 // userConfessed ~ married: 숨은 연애 상태. 화면에 표시하지 않는다. 대화 기록의 상태창 코드로만 확인한다.
@@ -61,7 +61,6 @@ function MashiroStatus(props = {}) {
   const [open, setOpen] = useState(!!defaultOpen);
   const [popup, setPopup] = useState(null);
   const [hop, setHop] = useState(0);
-  const [imgFail, setImgFail] = useState(false);
   const [checks, setChecks] = useState({});
   const [page, setPage] = useState(0);
   const [flip, setFlip] = useState({ n: 0, dir: "r" });
@@ -283,8 +282,7 @@ function MashiroStatus(props = {}) {
   const away = stageIdx === 1;
   const sleep = stageIdx >= 3;
   const pose = away ? "" : sleep ? " ms-sleep" : stageIdx === 0 ? " ms-think" : " ms-draw";
-  const useImg = !!bgSrc && !imgFail;
-  const fail = () => setImgFail(true);
+  const useImg = !!bgSrc;
   const spKey = away ? "empty" : sleep ? "sleep" : stageIdx === 0 ? "think" : "draw";
   const spSrc = { draw: spriteDraw, think: spriteThink, sleep: spriteSleep, empty: spriteEmpty }[spKey];
   const box = (b) => ({ left: ox + (b[0] / 4) * sc, top: oy + (b[1] / 4) * sc, width: (b[2] / 4) * sc, height: (b[3] / 4) * sc });
@@ -311,7 +309,7 @@ function MashiroStatus(props = {}) {
         </div>
       ) : null}
       {useImg ? (
-        <img src={bgSrc} alt="" className="ms-bg" onError={fail} />
+        <img src={bgSrc} alt="" className="ms-bg" />
       ) : (
         <svg viewBox={vb.join(" ")} preserveAspectRatio="xMidYMid slice" className="ms-bg" aria-hidden="true">
           <MsRoom />
@@ -321,7 +319,7 @@ function MashiroStatus(props = {}) {
       {/* 마시로 */}
       {useImg ? (
         away ? (
-          <img src={spSrc} alt="" className="ms-spimg" style={spBox} onError={fail} />
+          <img src={spSrc} alt="" className="ms-spimg" style={spBox} />
         ) : (
           <button
             type="button"
@@ -331,7 +329,7 @@ function MashiroStatus(props = {}) {
             aria-label="마시로"
             style={spBox}
           >
-            <img src={spSrc} alt="" style={{ width: "100%", height: "100%", display: "block" }} onError={fail} />
+            <img src={spSrc} alt="" style={{ width: "100%", height: "100%", display: "block" }} />
           </button>
         )
       ) : !away ? (
@@ -347,7 +345,7 @@ function MashiroStatus(props = {}) {
         </button>
       ) : null}
       {useImg && effSrc ? (
-        <img src={effSrc} alt="" className={"ms-eff ms-eff-" + effKey} style={box(MS_SPRITE[effKey + "Eff"])} onError={fail} />
+        <img src={effSrc} alt="" className={"ms-eff ms-eff-" + effKey} style={box(MS_SPRITE[effKey + "Eff"])} />
       ) : null}
       {!away && bub[0] && !(useImg && sleep) ? (
         <div className="ms-pop ms-bob" style={{ left: cx + 18, top: topY - 20 }}>
