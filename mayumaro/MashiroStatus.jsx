@@ -329,7 +329,7 @@ function MashiroStatus(props = {}) {
             aria-label="마시로"
             style={spBox}
           >
-            <img src={spSrc} alt="" style={{ width: "100%", height: "100%", display: "block" }} />
+            <img src={spSrc} alt="" className={"ms-anim-" + spKey} style={{ width: "100%", height: "100%", display: "block", "--sw": (Math.atan(MS_SWAY_PX / Math.max(1, spBox.height)) * 180 / Math.PI).toFixed(2) + "deg" }} />
           </button>
         )
       ) : !away ? (
@@ -354,7 +354,7 @@ function MashiroStatus(props = {}) {
           <span className="ms-tail"><MsPix d={MS_ICON.tail} w={10} h={6} s={1} /></span>
         </div>
       ) : null}
-      <div className="ms-ntag" style={{ left: cx - 70, top: botY + 4, width: 140 }}>
+      <div className="ms-ntag" style={{ left: cx - 70, top: useImg ? botY - spBox.height * MS_TAG_UP : botY + 4, width: 140 }}>
         <span>{away ? "취재 외출중" : status + " " + mashiroFace}</span>
       </div>
 
@@ -475,6 +475,10 @@ const MS_INK = "#2b2420";
 const MS_C = { ink: MS_INK, red: "#e0442e", blue: "#2f80a8" };
 const MS_ANCHOR = [165.1, 179.9];
 const MS_IMG = "https://mayumaro.vercel.app/img/status/";
+/* 움직임 크기: 작화 통통 높이(px), 고민 흔들림 폭(px, 머리끝이 좌우로 움직이는 거리), 이름표를 스프라이트 위로 겹치는 비율 */
+const MS_HOP_PX = 5;
+const MS_SWAY_PX = 7;
+const MS_TAG_UP = 0.3;
 /* 스프라이트 위치: PSD(1268×1268) 레이어 상자 [x, y, 너비, 높이] (px). 화면에서는 1268px = 317단위로 환산한다 */
 const MS_SPRITE = {
   draw: [464, 481, 272, 381],
@@ -614,6 +618,8 @@ const MS_CSS = `
 .ms-sprite svg{width:100%;height:100%;display:block;overflow:visible}
 .ms-hop{animation:ms-hop .3s ease-out}
 .ms-spimg{position:absolute;z-index:1;display:block;pointer-events:none}
+.ms-anim-draw{animation:ms-bounce .7s ease-in-out infinite}
+.ms-anim-think{transform-origin:50% 100%;animation:ms-sway 2.2s ease-in-out infinite}
 .ms-eff{position:absolute;z-index:1;display:block;pointer-events:none}
 .ms-eff-draw{animation:ms-blink .6s steps(1) infinite}
 .ms-eff-sleep{animation:ms-zz 2.4s ease-in-out infinite}
@@ -669,6 +675,8 @@ const MS_CSS = `
 @keyframes ms-head{0%{transform:translate(0,0)}100%{transform:translate(0,1px)}}
 @keyframes ms-tilt{0%{transform:translate(0,0)}100%{transform:translate(-1px,0)}}
 @keyframes ms-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.95)}}
+@keyframes ms-bounce{0%,55%,100%{transform:translateY(0)}25%{transform:translateY(-${MS_HOP_PX}px)}}
+@keyframes ms-sway{0%,100%{transform:rotate(calc(var(--sw) * -1))}50%{transform:rotate(var(--sw))}}
 @keyframes ms-blink{0%{opacity:1}50%{opacity:0}}
 @keyframes ms-zz{0%,100%{transform:translateY(2px);opacity:.55}50%{transform:translateY(-4px);opacity:1}}
 @keyframes ms-hop{0%{transform:translateY(0)}40%{transform:translateY(-8px)}100%{transform:translateY(0)}}
