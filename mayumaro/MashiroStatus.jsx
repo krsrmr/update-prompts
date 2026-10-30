@@ -1,6 +1,8 @@
 // 필요 훅: useState, useEffect, useRef (react)
 // 마시로 상태창. 접힘/펼침, PC(넓은 화면)·모바일(좁은 화면) 배치가 자동으로 바뀐다.
-// 배경·마시로 이미지는 bgSrc, spriteSrc에 주소를 넣으면 교체된다. 비워두면 코드로 그린 임시 도트가 나온다.
+// 배경·마시로 이미지는 기본으로 사이트(mayumaro.vercel.app/img/status/)에서 불러온다.
+// bgSrc, spriteDraw/Think/Sleep/Empty, effDraw/effSleep로 주소를 바꿀 수 있다. 하나라도 못 불러오면 코드로 그린 임시 도트로 돌아간다.
+// 단계별 그림: 시나리오=think, 취재=empty(빈 의자), 작화=draw, 마감·완료=sleep. 위치는 PSD(1268×1268) 배치 기준.
 // 숨은 기능: 마시로를 5번 연속으로 누르면 비공개 스탯 창이 열린다.
 // userConfessed ~ married: 숨은 연애 상태. 화면에 표시하지 않는다. 대화 기록의 상태창 코드로만 확인한다.
 // nextUpdate(다음 루넬 갱신일), material(원고 재료 메모): 숨은 값. 화면에 표시하지 않는다.
@@ -43,8 +45,13 @@ function MashiroStatus(props = {}) {
     married = false,
     nextUpdate = "11/2",
     material = "우산 속에서 닿은 어깨, 빨개진 귀",
-    bgSrc = "",
-    spriteSrc = "",
+    bgSrc = MS_IMG + "bg.webp",
+    spriteDraw = MS_IMG + "sprite-draw.webp",
+    spriteThink = MS_IMG + "sprite-think.webp",
+    spriteSleep = MS_IMG + "sprite-sleep.webp",
+    spriteEmpty = MS_IMG + "sprite-empty.webp",
+    effDraw = MS_IMG + "eff-draw.webp",
+    effSleep = MS_IMG + "eff-sleep.webp",
     defaultOpen = false
   } = props;
 
@@ -54,6 +61,7 @@ function MashiroStatus(props = {}) {
   const [open, setOpen] = useState(!!defaultOpen);
   const [popup, setPopup] = useState(null);
   const [hop, setHop] = useState(0);
+  const [imgFail, setImgFail] = useState(false);
   const [checks, setChecks] = useState({});
   const [page, setPage] = useState(0);
   const [flip, setFlip] = useState({ n: 0, dir: "r" });
@@ -275,8 +283,20 @@ function MashiroStatus(props = {}) {
   const away = stageIdx === 1;
   const sleep = stageIdx >= 3;
   const pose = away ? "" : sleep ? " ms-sleep" : stageIdx === 0 ? " ms-think" : " ms-draw";
+  const useImg = !!bgSrc && !imgFail;
+  const fail = () => setImgFail(true);
+  const spKey = away ? "empty" : sleep ? "sleep" : stageIdx === 0 ? "think" : "draw";
+  const spSrc = { draw: spriteDraw, think: spriteThink, sleep: spriteSleep, empty: spriteEmpty }[spKey];
+  const box = (b) => ({ left: ox + (b[0] / 4) * sc, top: oy + (b[1] / 4) * sc, width: (b[2] / 4) * sc, height: (b[3] / 4) * sc });
+  const spBox = box(MS_SPRITE[spKey]);
+  const effKey = spKey === "draw" ? "draw" : spKey === "sleep" ? "sleep" : null;
+  const effSrc = effKey === "draw" ? effDraw : effKey === "sleep" ? effSleep : "";
+  // 말풍선·이름표 기준점: 그림이면 스프라이트 상자, 임시 도트면 예전 기준점
   const spriteW = 28 * sc;
   const spriteH = 36 * sc;
+  const cx = useImg ? spBox.left + spBox.width / 2 : sx;
+  const topY = useImg ? spBox.top : sy - spriteH;
+  const botY = useImg ? spBox.top + spBox.height : sy;
   const scene = (
     <div className="ms-stage ms-in" style={{ height: H, background: sky }}>
       {String(weather).includes("비") || String(weather).includes("소나기") ? <div className="ms-rain" /> : null}
@@ -290,8 +310,8 @@ function MashiroStatus(props = {}) {
           ))}
         </div>
       ) : null}
-      {bgSrc ? (
-        <img src={bgSrc} alt="" className="ms-bg" />
+      {useImg ? (
+        <img src={bgSrc} alt="" className="ms-bg" onError={fail} />
       ) : (
         <svg viewBox={vb.join(" ")} preserveAspectRatio="xMidYMid slice" className="ms-bg" aria-hidden="true">
           <MsRoom />
@@ -299,7 +319,22 @@ function MashiroStatus(props = {}) {
       )}
 
       {/* 마시로 */}
-      {!away ? (
+      {useImg ? (
+        away ? (
+          <img src={spSrc} alt="" className="ms-spimg" style={spBox} onError={fail} />
+        ) : (
+          <button
+            type="button"
+            key={"hop" + hop}
+            className={"ms-sprite" + (hop ? " ms-hop" : "")}
+            onClick={tapMashiro}
+            aria-label="마시로"
+            style={spBox}
+          >
+            <img src={spSrc} alt="" style={{ width: "100%", height: "100%", display: "block" }} onError={fail} />
+          </button>
+        )
+      ) : !away ? (
         <button
           type="button"
           key={"hop" + hop}
@@ -308,21 +343,20 @@ function MashiroStatus(props = {}) {
           aria-label="마시로"
           style={{ left: sx - spriteW / 2, top: sy - spriteH, width: spriteW, height: spriteH }}
         >
-          {spriteSrc ? (
-            <img src={spriteSrc} alt="" style={{ width: "100%", height: "100%", imageRendering: "pixelated" }} />
-          ) : (
-            <MsMashiro />
-          )}
+          <MsMashiro />
         </button>
       ) : null}
-      {!away && bub[0] ? (
-        <div className="ms-pop ms-bob" style={{ left: sx + 18, top: sy - spriteH - 20 }}>
+      {useImg && effSrc ? (
+        <img src={effSrc} alt="" className={"ms-eff ms-eff-" + effKey} style={box(MS_SPRITE[effKey + "Eff"])} onError={fail} />
+      ) : null}
+      {!away && bub[0] && !(useImg && sleep) ? (
+        <div className="ms-pop ms-bob" style={{ left: cx + 18, top: topY - 20 }}>
           {sleep ? "Zzz…" : bub[0]}
           {!sleep && bub[1] ? <><br /><b className="ms-dot">{bub[1]}</b></> : null}
           <span className="ms-tail"><MsPix d={MS_ICON.tail} w={10} h={6} s={1} /></span>
         </div>
       ) : null}
-      <div className="ms-ntag" style={{ left: sx - 70, top: sy + 4, width: 140 }}>
+      <div className="ms-ntag" style={{ left: cx - 70, top: botY + 4, width: 140 }}>
         <span>{away ? "취재 외출중" : status + " " + mashiroFace}</span>
       </div>
 
@@ -442,6 +476,16 @@ function MashiroStatus(props = {}) {
 const MS_INK = "#2b2420";
 const MS_C = { ink: MS_INK, red: "#e0442e", blue: "#2f80a8" };
 const MS_ANCHOR = [165.1, 179.9];
+const MS_IMG = "https://mayumaro.vercel.app/img/status/";
+/* 스프라이트 위치: PSD(1268×1268) 레이어 상자 [x, y, 너비, 높이] (px). 화면에서는 1268px = 317단위로 환산한다 */
+const MS_SPRITE = {
+  draw: [464, 481, 272, 381],
+  think: [481, 477, 227, 405],
+  sleep: [455, 537, 367, 325],
+  empty: [488, 628, 216, 224],
+  drawEff: [707, 569, 38, 52],
+  sleepEff: [752, 633, 45, 51]
+};
 
 function msDday(v) {
   if (v === null || v === undefined || v === "" || v === false) return null;
@@ -571,6 +615,10 @@ const MS_CSS = `
 .ms-sprite{position:absolute;padding:0;border:0;background:none;z-index:1;transform-origin:50% 100%}
 .ms-sprite svg{width:100%;height:100%;display:block;overflow:visible}
 .ms-hop{animation:ms-hop .3s ease-out}
+.ms-spimg{position:absolute;z-index:1;display:block;pointer-events:none}
+.ms-eff{position:absolute;z-index:1;display:block;pointer-events:none}
+.ms-eff-draw{animation:ms-blink .6s steps(1) infinite}
+.ms-eff-sleep{animation:ms-zz 2.4s ease-in-out infinite}
 .ms-draw .ms-arm{animation:ms-arm .35s steps(2) infinite}
 .ms-draw .ms-head{animation:ms-head 1.4s steps(2) infinite}
 .ms-think .ms-head{animation:ms-tilt 1.8s steps(2) infinite}
@@ -623,6 +671,8 @@ const MS_CSS = `
 @keyframes ms-head{0%{transform:translate(0,0)}100%{transform:translate(0,1px)}}
 @keyframes ms-tilt{0%{transform:translate(0,0)}100%{transform:translate(-1px,0)}}
 @keyframes ms-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.95)}}
+@keyframes ms-blink{0%{opacity:1}50%{opacity:0}}
+@keyframes ms-zz{0%,100%{transform:translateY(2px);opacity:.55}50%{transform:translateY(-4px);opacity:1}}
 @keyframes ms-hop{0%{transform:translateY(0)}40%{transform:translateY(-8px)}100%{transform:translateY(0)}}
 @keyframes ms-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 @keyframes ms-nudge{0%,100%{opacity:1}50%{opacity:.55}}
