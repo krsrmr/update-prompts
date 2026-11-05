@@ -1,5 +1,5 @@
 // 필요 훅: useState, useRef, useEffect (react)
-// 오손 상태창 v0.2 (가제작) — 바이닐 플레이어
+// 오손 상태창 v0.3 (가제작) — 바이닐 플레이어
 
 function Orsonstatus(props = {}) {
   const p = props || {};
@@ -27,6 +27,7 @@ function Orsonstatus(props = {}) {
   const dur = 150 + (osHue(song + artist) % 151);
 
   const [open, setOpen] = useState(false);
+  const [more, setMore] = useState(false);
   const [bodyH, setBodyH] = useState(0);
   const [sec, setSec] = useState(() => osHue(artist + song) % 120);
   const bodyRef = useRef(null);
@@ -48,7 +49,7 @@ function Orsonstatus(props = {}) {
       return () => ro.disconnect();
     }
     return undefined;
-  }, [open, known.length, threads.length, pending.length]);
+  }, [open, more, known.length, threads.length, pending.length]);
 
   const tod = osTod(time);
   const T = OS_THEME[tod];
@@ -425,86 +426,101 @@ function Orsonstatus(props = {}) {
           ".25s"
         )}
 
-        <div className="os-rise" style={{ flex: "1 1 100%", animationDelay: ".3s" }}>
-          {heading("관계", "SIDE A")}
-          {OS_STAGE.map((s, i) => {
-            const n = i + 1;
-            const cur = n === stage;
-            const locked = n > stage;
-            return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", opacity: locked ? 0.4 : 1 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: cur ? 700 : 500, color: cur ? T.accent : "#fff" }}>
-                    {cur ? eq(12, T.accent) : null}
-                    <span>{s.kr}</span>
-                  </div>
-                  <div style={{ fontSize: 12.5, color: sub, marginTop: 3 }}>{s.en + " · Orson Callahan"}</div>
-                </div>
-                <span style={{ fontSize: locked ? 13 : 18, color: sub, letterSpacing: 1 }}>{locked ? "🔒" : "···"}</span>
-              </div>
-            );
-          })}
+        <div onClick={() => setMore(!more)} className="os-rise" style={{ flex: "1 1 100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", borderRadius: 10, background: "rgba(255,255,255,.07)", cursor: "pointer", animationDelay: ".3s" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 800, wordBreak: "keep-all" }}>관계 · 크레딧 · 동네 사정 · 작업대 위</div>
+            <div style={{ fontSize: 12, color: sub, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{OS_STAGE[stage - 1].kr + " · 크레딧 " + known.length + " · 동네 " + threads.length + " · 작업대 " + pending.length}</div>
+          </div>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, padding: "6px 10px 6px 12px", borderRadius: 16, background: "rgba(255,255,255,.12)", fontSize: 12, fontWeight: 700 }}>
+            {more ? "접기" : "더보기"}
+            {icon(<path d={more ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} />, 14, "#fff")}
+          </span>
         </div>
 
-        {card(
-          "known",
-          "크레딧",
-          "WHAT ORSON KNOWS",
-          known.length ? (
-            <div style={{ display: "grid", gap: 11 }}>
-              {known.map((k, i) => (
-                <div key={i} style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 14, fontWeight: 700, wordBreak: "keep-all" }}>{k.text}</div>
-                  {k.name ? <div style={{ fontSize: 12.5, color: sub, marginTop: 1 }}>{k.name}</div> : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, color: sub }}>아직 아는 게 없다.</div>
-          ),
-          ".35s"
-        )}
-        {card(
-          "town",
-          "동네 사정",
-          "AROUND TOWN",
-          threads.length ? (
-            <div style={{ display: "grid", gap: 12 }}>
-              {threads.map((t, i) => (
-                <div key={i} style={{ display: "flex", gap: 11, alignItems: "center" }}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", flexShrink: 0, background: "hsl(" + osHue(t.name || t.text) + ", 35%, 40%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800 }}>{(t.name || "?").slice(0, 1)}</div>
-                  <div style={{ minWidth: 0, wordBreak: "keep-all" }}>
-                    <div style={{ fontSize: 14, fontWeight: 700 }}>{t.name || "누군가"}</div>
-                    <div style={{ fontSize: 12.5, color: sub, marginTop: 1, lineHeight: 1.4 }}>{t.text}</div>
+        {more ? (
+          <div style={{ display: "contents" }}>
+          <div className="os-rise" style={{ flex: "1 1 100%", animationDelay: ".05s" }}>
+            {heading("관계", "SIDE A")}
+            {OS_STAGE.map((s, i) => {
+              const n = i + 1;
+              const cur = n === stage;
+              const locked = n > stage;
+              return (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", opacity: locked ? 0.4 : 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: cur ? 700 : 500, color: cur ? T.accent : "#fff" }}>
+                      {cur ? eq(12, T.accent) : null}
+                      <span>{s.kr}</span>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: sub, marginTop: 3 }}>{s.en + " · Orson Callahan"}</div>
                   </div>
+                  <span style={{ fontSize: locked ? 13 : 18, color: sub, letterSpacing: 1 }}>{locked ? "🔒" : "···"}</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, color: sub }}>동네는 조용하다.</div>
-          ),
-          ".4s"
-        )}
-        {card(
-          "bench",
-          "작업대 위",
-          "ON THE BENCH",
-          pending.length ? (
-            <div style={{ display: "grid", gap: 8 }}>
-              {pending.map((t, i) => (
-                <div key={i} style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px 8px 24px", background: "#efe6d2", color: "#3b3326", fontSize: 13, clipPath: "polygon(13px 0, 100% 0, 100% 100%, 13px 100%, 0 50%)", wordBreak: "keep-all" }}>
-                  <span style={{ position: "absolute", left: 10, top: "50%", width: 6, height: 6, marginTop: -3, borderRadius: "50%", background: "#2a2a2a" }} />
-                  <span style={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{t.what}</span>
-                  {t.due ? <span style={{ flexShrink: 0, fontSize: 11.5, fontWeight: 800, color: "#b23a2e" }}>{t.due}</span> : null}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, color: sub }}>작업대가 비었다. 드문 일이다.</div>
-          ),
-          ".45s",
-          true
-        )}
+              );
+            })}
+          </div>
+
+          {card(
+            "known",
+            "크레딧",
+            "WHAT ORSON KNOWS",
+            known.length ? (
+              <div style={{ display: "grid", gap: 11 }}>
+                {known.map((k, i) => (
+                  <div key={i} style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, wordBreak: "keep-all" }}>{k.text}</div>
+                    {k.name ? <div style={{ fontSize: 12.5, color: sub, marginTop: 1 }}>{k.name}</div> : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: sub }}>아직 아는 게 없다.</div>
+            ),
+            ".1s"
+          )}
+          {card(
+            "town",
+            "동네 사정",
+            "AROUND TOWN",
+            threads.length ? (
+              <div style={{ display: "grid", gap: 12 }}>
+                {threads.map((t, i) => (
+                  <div key={i} style={{ display: "flex", gap: 11, alignItems: "center" }}>
+                    <div style={{ width: 38, height: 38, borderRadius: "50%", flexShrink: 0, background: "hsl(" + osHue(t.name || t.text) + ", 35%, 40%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800 }}>{(t.name || "?").slice(0, 1)}</div>
+                    <div style={{ minWidth: 0, wordBreak: "keep-all" }}>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>{t.name || "누군가"}</div>
+                      <div style={{ fontSize: 12.5, color: sub, marginTop: 1, lineHeight: 1.4 }}>{t.text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: sub }}>동네는 조용하다.</div>
+            ),
+            ".15s"
+          )}
+          {card(
+            "bench",
+            "작업대 위",
+            "ON THE BENCH",
+            pending.length ? (
+              <div style={{ display: "grid", gap: 8 }}>
+                {pending.map((t, i) => (
+                  <div key={i} style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px 8px 24px", background: "#efe6d2", color: "#3b3326", fontSize: 13, clipPath: "polygon(13px 0, 100% 0, 100% 100%, 13px 100%, 0 50%)", wordBreak: "keep-all" }}>
+                    <span style={{ position: "absolute", left: 10, top: "50%", width: 6, height: 6, marginTop: -3, borderRadius: "50%", background: "#2a2a2a" }} />
+                    <span style={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{t.what}</span>
+                    {t.due ? <span style={{ flexShrink: 0, fontSize: 11.5, fontWeight: 800, color: "#b23a2e" }}>{t.due}</span> : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: sub }}>작업대가 비었다. 드문 일이다.</div>
+            ),
+            ".2s",
+            true
+          )}
+          </div>
+        ) : null}
       </div>
     </div>
   );
