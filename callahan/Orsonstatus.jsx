@@ -1,5 +1,5 @@
 // 필요 훅: useState, useRef, useEffect (react)
-// 오손 상태창 v0 (가제작) — 바이닐 플레이어
+// 오손 상태창 v0.2 (가제작) — 바이닐 플레이어
 
 function Orsonstatus(props = {}) {
   const p = props || {};
@@ -19,13 +19,23 @@ function Orsonstatus(props = {}) {
   const propane = osPropane(p.propane);
   const goal = osVal(p.goal, "");
   const stage = Math.max(1, Math.min(4, Math.round(Number(p.stage) || 1)));
-  const known = osList(p.known);
+  const known = osList(p.known).map(osSplitName);
   const threads = osList(p.threads).map(osSplitName);
   const pending = osList(p.pending).map(osSplitDue);
 
+  const silent = osSilent(song, source);
+  const dur = 150 + (osHue(song + artist) % 151);
+
   const [open, setOpen] = useState(false);
   const [bodyH, setBodyH] = useState(0);
+  const [sec, setSec] = useState(() => osHue(artist + song) % 120);
   const bodyRef = useRef(null);
+
+  useEffect(() => {
+    if (silent) return undefined;
+    const id = setInterval(() => setSec((s) => (s + 1) % dur), 1000);
+    return () => clearInterval(id);
+  }, [silent, dur]);
 
   useEffect(() => {
     const update = () => {
@@ -42,18 +52,18 @@ function Orsonstatus(props = {}) {
 
   const tod = osTod(time);
   const T = OS_THEME[tod];
-  const silent = osSilent(song, source);
   const wx = osWx(weather, tod);
   const bodyItems = body ? body.split(/[,，·\/]/).map((s) => s.trim()).filter(Boolean) : [];
   const songTitle = silent ? "조용함" : song;
+  const pct = silent ? 0 : (sec / dur) * 100;
 
   const font = "Pretendard, 'Apple SD Gothic Neo', 'Noto Sans KR', system-ui, sans-serif";
   const mono = "'Courier New', ui-monospace, Menlo, monospace";
-  const sub = "#a7a7a7";
+  const sub = "#b3b3b3";
 
-  const chevron = (up) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-      <path d={up ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} stroke="#fff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  const icon = (children, size, color, extra) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color || "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, display: "block", ...(extra || {}) }}>
+      {children}
     </svg>
   );
 
@@ -66,45 +76,67 @@ function Orsonstatus(props = {}) {
   );
 
   const vinyl = (size, spin) => (
-    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+    <div style={{ position: "relative", width: size, height: size }}>
       <div
         className={spin ? "os-spin" : ""}
         style={{
           position: "absolute",
           inset: 0,
           borderRadius: "50%",
-          background: "repeating-radial-gradient(circle at 50% 50%, #141414 0px, #141414 1.6px, #242424 2.2px, #141414 3.2px)",
-          boxShadow: "0 " + Math.round(size * 0.05) + "px " + Math.round(size * 0.12) + "px rgba(0,0,0,.55), inset 0 0 0 1px #000",
+          background: "repeating-radial-gradient(circle at 50% 50%, #111 0px, #111 1.4px, #1f1f1f 2px, #111 2.8px)",
+          boxShadow: "0 " + Math.round(size * 0.04) + "px " + Math.round(size * 0.1) + "px rgba(0,0,0,.6)",
         }}
       >
-        <div
-          style={{
-            position: "absolute",
-            left: "32%",
-            top: "32%",
-            width: "36%",
-            height: "36%",
-            borderRadius: "50%",
-            background: "conic-gradient(" + T.accent + " 0deg 180deg, " + T.label2 + " 180deg 360deg)",
-            boxShadow: "inset 0 0 0 " + Math.max(1, Math.round(size * 0.012)) + "px rgba(0,0,0,.25)",
-          }}
-        >
-          {size > 80 ? (
-            <span style={{ position: "absolute", left: 0, right: 0, top: "18%", textAlign: "center", fontSize: Math.round(size * 0.05), fontWeight: 800, letterSpacing: 1, color: "rgba(0,0,0,.6)" }}>B-SIDE</span>
+        <div style={{ position: "absolute", left: "33%", top: "33%", width: "34%", height: "34%", borderRadius: "50%", background: "conic-gradient(" + T.accent + " 0deg 180deg, " + T.label2 + " 180deg 360deg)" }}>
+          {size > 100 ? (
+            <span style={{ position: "absolute", left: 0, right: 0, top: "20%", textAlign: "center", fontSize: Math.round(size * 0.045), fontWeight: 800, letterSpacing: 1, color: "rgba(0,0,0,.55)" }}>B-SIDE</span>
           ) : null}
-          <span style={{ position: "absolute", left: "50%", top: "50%", width: Math.max(3, Math.round(size * 0.03)), height: Math.max(3, Math.round(size * 0.03)), borderRadius: "50%", background: "#0b0b0b", transform: "translate(-50%,-50%)" }} />
+          <span style={{ position: "absolute", left: "50%", top: "50%", width: Math.max(3, Math.round(size * 0.028)), height: Math.max(3, Math.round(size * 0.028)), borderRadius: "50%", background: "#0b0b0b", transform: "translate(-50%,-50%)" }} />
         </div>
       </div>
-      <div style={{ position: "absolute", inset: 0, borderRadius: "50%", pointerEvents: "none", background: "conic-gradient(from 20deg, transparent 0deg, rgba(255,255,255,.10) 28deg, transparent 58deg, transparent 182deg, rgba(255,255,255,.07) 208deg, transparent 238deg)" }} />
+      <div style={{ position: "absolute", inset: 0, borderRadius: "50%", pointerEvents: "none", background: "conic-gradient(from 20deg, transparent 0deg, rgba(255,255,255,.09) 28deg, transparent 58deg, transparent 182deg, rgba(255,255,255,.06) 208deg, transparent 238deg)" }} />
     </div>
   );
 
-  const card = (key, title, en, children, extra) => (
-    <div key={key} className="os-rise" style={{ flex: "1 1 200px", minWidth: 0, background: "#1e1e1e", borderRadius: 10, padding: "11px 12px 12px", boxSizing: "border-box", animationDelay: (extra && extra.delay) || "0s", ...((extra && extra.style) || {}) }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 9 }}>
-        <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 1.3, color: "#fff" }}>{en}</span>
-        <span style={{ fontSize: 11, color: sub }}>{title}</span>
+  const plinth = (size, big) => {
+    const v = Math.round(size * (big ? 0.82 : 0.84));
+    const off = Math.round((size - v) / 2);
+    return (
+      <div style={{ position: "relative", width: size, height: size, flexShrink: 0, borderRadius: big ? 8 : 4, overflow: "hidden", background: "linear-gradient(150deg, " + T.plinth + " 0%, #141414 75%)", boxShadow: big ? "0 22px 44px rgba(0,0,0,.5)" : "0 2px 6px rgba(0,0,0,.4)" }}>
+        <div style={{ position: "absolute", left: big ? Math.round(off * 0.55) : off, top: off }}>{vinyl(v, !silent && (big ? open : true))}</div>
+        {big ? (
+          <svg viewBox="0 0 272 272" width={size} height={size} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+            <g className={silent ? "os-arm-rest" : "os-arm"} style={{ transformOrigin: "236px 42px" }}>
+              <path d="M236 42 L214 150 L188 186" stroke="#d6d6d6" strokeWidth="4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              <rect x="176" y="180" width="22" height="11" rx="2" fill="#a9a9a9" transform="rotate(-36 187 186)" />
+            </g>
+            <circle cx="236" cy="42" r="13" fill="#2b2b2b" stroke="#4a4a4a" strokeWidth="2" />
+            <circle cx="236" cy="42" r="4.5" fill="#9a9a9a" />
+            <text x="22" y="254" fill="rgba(255,255,255,.45)" fontSize="10" fontWeight="700" letterSpacing="1.5" fontFamily="system-ui, sans-serif">33⅓</text>
+            <circle cx="250" cy="250" r="3.5" fill={silent ? "#3a3a3a" : T.accent} className={silent ? "" : "os-glow"} />
+          </svg>
+        ) : null}
       </div>
+    );
+  };
+
+  const heading = (kr, en) => (
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginBottom: 10 }}>
+      <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: -0.2 }}>{kr}</span>
+      {en ? <span style={{ fontSize: 10, letterSpacing: 1.3, color: sub, fontWeight: 700 }}>{en}</span> : null}
+    </div>
+  );
+
+  const card = (key, kr, en, children, delay, wide) => (
+    <div key={key} className="os-rise" style={{ flex: wide ? "1 1 100%" : "1 1 200px", minWidth: 0, background: "rgba(255,255,255,.07)", borderRadius: 10, padding: "14px 14px 15px", boxSizing: "border-box", animationDelay: delay }}>
+      {heading(kr, en)}
+      {children}
+    </div>
+  );
+
+  const bare = (key, kr, en, children, delay) => (
+    <div key={key} className="os-rise" style={{ flex: "1 1 200px", minWidth: 0, animationDelay: delay }}>
+      {heading(kr, en)}
       {children}
     </div>
   );
@@ -115,27 +147,7 @@ function Orsonstatus(props = {}) {
     return (
       <div style={{ display: "flex", gap: 3 }}>
         {s.split("").map((d, i) => (
-          <div
-            key={i + d}
-            className="os-flip"
-            style={{
-              position: "relative",
-              width: 25,
-              height: 36,
-              borderRadius: 4,
-              background: "linear-gradient(#1d1d1d 50%, #151515 50%)",
-              boxShadow: "inset 0 0 0 1px #2c2c2c, 0 2px 4px rgba(0,0,0,.6)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontFamily: mono,
-              fontWeight: 700,
-              fontSize: 23,
-              color: zero ? "#ff5d5d" : "#ffb347",
-              textShadow: zero ? "0 0 8px rgba(255,93,93,.6)" : "0 0 8px rgba(255,179,71,.55)",
-              animationDelay: delay + i * 0.08 + "s",
-            }}
-          >
+          <div key={i + d} className="os-flip" style={{ position: "relative", width: 26, height: 38, borderRadius: 4, background: "linear-gradient(#1f1f1f 50%, #171717 50%)", boxShadow: "inset 0 0 0 1px #2e2e2e, 0 2px 4px rgba(0,0,0,.6)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: mono, fontWeight: 700, fontSize: 24, color: zero ? "#ff5d5d" : "#ffb347", textShadow: zero ? "0 0 8px rgba(255,93,93,.6)" : "0 0 8px rgba(255,179,71,.5)", animationDelay: delay + i * 0.08 + "s" }}>
             {d}
             <span style={{ position: "absolute", left: 0, right: 0, top: "50%", height: 1, background: "#000" }} />
           </div>
@@ -145,19 +157,19 @@ function Orsonstatus(props = {}) {
   };
 
   const scoreCol = (kr, en, n, delay) => (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-      <div style={{ fontSize: 10, letterSpacing: 1.5, fontWeight: 800, color: "#ffb347", opacity: 0.85 }}>{en}</div>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 7 }}>
+      <div style={{ fontSize: 9.5, letterSpacing: 1.6, fontWeight: 800, color: "#ffb347", opacity: 0.85 }}>{en}</div>
       {digits(n, delay)}
-      <div style={{ fontSize: 11, color: n === 0 ? "#ff5d5d" : sub }}>
-        {n === 0 ? <span className="os-blink" style={{ fontWeight: 800, letterSpacing: 1 }}>RESET</span> : kr + (n === null ? "" : " " + n + "일째")}
+      <div style={{ fontSize: 11, color: n === 0 ? "#ff5d5d" : "#9a9a9a" }}>
+        {n === 0 ? <span className="os-blink" style={{ fontWeight: 800, letterSpacing: 1.5 }}>RESET</span> : kr + (n === null ? "" : " " + n + "일째")}
       </div>
     </div>
   );
 
   const leader = (label, value) => (
-    <div style={{ display: "flex", alignItems: "baseline", margin: "3px 0" }}>
+    <div style={{ display: "flex", alignItems: "baseline", margin: "4px 0" }}>
       <span>{label}</span>
-      <span style={{ flex: 1, borderBottom: "1px dotted #9a958a", margin: "0 6px", transform: "translateY(-3px)" }} />
+      <span style={{ flex: 1, borderBottom: "1px dotted #a19b8f", margin: "0 6px", transform: "translateY(-3px)" }} />
       <span style={{ fontWeight: 700 }}>{value}</span>
     </div>
   );
@@ -175,141 +187,210 @@ function Orsonstatus(props = {}) {
 
   const cashText = cash === "" ? "—" : isFinite(Number(cash)) ? "$" + Number(cash).toFixed(2) : cash;
 
+  const rentValue = rent ? (
+    rent.sub ? (
+      <span className="os-stamp" style={{ display: "inline-block", padding: "1px 6px", border: "2px solid " + rent.color, color: rent.color, borderRadius: 3, fontWeight: 800, fontSize: 11.5, letterSpacing: 1.5 }}>
+        {rent.text}
+      </span>
+    ) : (
+      rent.text
+    )
+  ) : (
+    "—"
+  );
+
   const receipt = (
-    <div style={{ position: "relative", filter: "drop-shadow(0 4px 8px rgba(0,0,0,.45))" }}>
-      <div className="os-print" style={{ background: "#f3efe6", color: "#2b2b2b", fontFamily: mono, fontSize: 12, padding: "11px 12px 8px", borderRadius: "3px 3px 0 0", position: "relative", overflow: "hidden" }}>
+    <div style={{ filter: "drop-shadow(0 6px 10px rgba(0,0,0,.45))" }}>
+      <div className="os-print" style={{ background: "#f3efe6", color: "#2b2b2b", fontFamily: mono, fontSize: 12, padding: "12px 13px 9px", borderRadius: "3px 3px 0 0" }}>
         <div style={{ textAlign: "center", fontWeight: 700, letterSpacing: 3, fontSize: 13 }}>WALLET</div>
         <div style={{ textAlign: "center", fontSize: 9.5, color: "#6d675c", marginBottom: 6 }}>O. CALLAHAN · BEACON NY</div>
-        <div style={{ borderTop: "1px dashed #9a958a", margin: "4px 0 6px" }} />
+        <div style={{ borderTop: "1px dashed #a19b8f", margin: "4px 0 6px" }} />
         {leader("CASH", cashText)}
-        {leader(
-          "LOT RENT",
-          rent ? (
-            rent.sub ? (
-              <span className="os-stamp" style={{ display: "inline-block", padding: "1px 6px", border: "2px solid " + rent.color, color: rent.color, borderRadius: 3, fontWeight: 800, fontSize: 11.5, letterSpacing: 1.5 }}>
-                {rent.text}
-              </span>
-            ) : (
-              rent.text
-            )
-          ) : (
-            "—"
-          )
-        )}
+        {leader("LOT RENT", rentValue)}
         {leader("PROPANE", gauge)}
-        <div style={{ borderTop: "1px dashed #9a958a", margin: "6px 0 4px" }} />
+        <div style={{ borderTop: "1px dashed #a19b8f", margin: "6px 0 4px" }} />
         <div style={{ textAlign: "center", fontSize: 9.5, color: "#6d675c", letterSpacing: 1 }}>*** NO REFUNDS ***</div>
       </div>
       <div style={{ height: 7, background: "linear-gradient(135deg, #f3efe6 50%, transparent 50%) 0 0 / 10px 10px repeat-x, linear-gradient(225deg, #f3efe6 50%, transparent 50%) 0 0 / 10px 10px repeat-x" }} />
     </div>
   );
 
-  const header = open ? (
-    <div onClick={() => setOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px 4px", cursor: "pointer" }}>
-      {chevron(false)}
-      <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
-        <div style={{ fontSize: 9.5, letterSpacing: 1.6, color: "#e6e6e6", opacity: 0.8 }}>PLAYING FROM</div>
-        <div style={{ fontSize: 12.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{source || place || "B-Side Vinyl & Frets"}</div>
-      </div>
-      <span style={{ width: 20, textAlign: "center", fontSize: 16, letterSpacing: 1, color: "#e6e6e6" }}>···</span>
-    </div>
-  ) : (
-    <div onClick={() => setOpen(true)} style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px 10px", cursor: "pointer", background: "linear-gradient(90deg, " + T.bar + ", #262626)", borderRadius: 10, overflow: "hidden" }}>
-      {vinyl(40, !silent)}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {songTitle}
-          {artist && !silent ? <span style={{ fontWeight: 400, color: "#cfcfcf" }}>{" · " + artist}</span> : null}
-        </div>
-        <div style={{ fontSize: 11.5, color: "#cfcfcf", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{[date, time].filter(Boolean).join(" · ")}</div>
-      </div>
-      {eq(14, T.accent)}
-      {chevron(true)}
-      <div style={{ position: "absolute", left: 10, right: 10, bottom: 3, height: 2, borderRadius: 1, background: "rgba(255,255,255,.18)", overflow: "hidden" }}>
-        <div className={silent ? "" : "os-prog"} style={{ height: "100%", width: silent ? "0%" : undefined, background: "#fff" }} />
+  const progress = (
+    <div style={{ position: "relative", height: 4, borderRadius: 2, background: "rgba(255,255,255,.25)" }}>
+      <div style={{ position: "relative", height: "100%", width: pct + "%", borderRadius: 2, background: "#fff", transition: "width 1s linear" }}>
+        <span style={{ position: "absolute", right: -6, top: -4, width: 12, height: 12, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,.4)" }} />
       </div>
     </div>
   );
 
-  const metaChips = [
-    ["📅", date],
-    ["🕒", time],
-    [wx, weather],
-    ["📍", place],
-  ].filter((m) => m[1]);
+  const header = open ? (
+    <div onClick={() => setOpen(false)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px 6px", cursor: "pointer" }}>
+      {icon(<path d="M6 9l6 6 6-6" />, 24, "#fff")}
+      <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
+        <div style={{ fontSize: 10, letterSpacing: 1.4, fontWeight: 700, color: "rgba(255,255,255,.75)" }}>PLAYING FROM</div>
+        <div style={{ fontSize: 12.5, fontWeight: 800, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{place || "B-Side Vinyl & Frets"}</div>
+      </div>
+      {icon(
+        <g fill="#fff" stroke="none">
+          <circle cx="5" cy="12" r="2" />
+          <circle cx="12" cy="12" r="2" />
+          <circle cx="19" cy="12" r="2" />
+        </g>,
+        22,
+        "#fff"
+      )}
+    </div>
+  ) : (
+    <div onClick={() => setOpen(true)} style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px 10px 8px", cursor: "pointer", background: T.mini, borderRadius: 8, overflow: "hidden" }}>
+      {plinth(42, false)}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {songTitle}
+          {artist && !silent ? <span style={{ fontWeight: 500, color: "rgba(255,255,255,.7)" }}>{" · " + artist}</span> : null}
+        </div>
+        <div style={{ fontSize: 12, color: "rgba(255,255,255,.7)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{[date, time].filter(Boolean).join(" · ")}</div>
+      </div>
+      {eq(14, T.accent)}
+      {icon(silent ? <path d="M7 4l13 8-13 8z" fill="#fff" stroke="none" /> : <g fill="#fff" stroke="none"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></g>, 24, "#fff")}
+      <div style={{ position: "absolute", left: 8, right: 8, bottom: 0, height: 2, borderRadius: 1, background: "rgba(255,255,255,.2)", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: pct + "%", background: "#fff", transition: "width 1s linear" }} />
+      </div>
+    </div>
+  );
+
+  const lyricLines = [
+    [date, true],
+    [time, true],
+    [weather ? wx + "  " + weather : "", false],
+    [place ? "📍 " + place : "", false],
+  ].filter((l) => l[0]);
 
   const content = (
     <div key={open ? "open" : "closed"}>
-      <div style={{ padding: "4px 18px 14px" }}>
-        <div className="os-rise" style={{ position: "relative", width: 176, margin: "8px auto 18px" }}>
-          {vinyl(176, open && !silent)}
-          <svg className="os-arm" width="64" height="118" viewBox="0 0 64 118" style={{ position: "absolute", right: -30, top: -8, overflow: "visible" }}>
-            <circle cx="48" cy="12" r="9" fill="#3a3a3a" stroke="#555" strokeWidth="1.5" />
-            <circle cx="48" cy="12" r="3" fill="#888" />
-            <path d="M48 12 L40 72 L22 100" stroke="#cfcfcf" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            <rect x="12" y="96" width="16" height="9" rx="2" fill="#9a9a9a" transform="rotate(-32 20 100)" />
-          </svg>
+      <div style={{ padding: "8px 22px 6px" }}>
+        <div className="os-rise" style={{ display: "flex", justifyContent: "center", margin: "6px 0 26px" }}>
+          {plinth(272, true)}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 20, fontWeight: 800, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{songTitle}</div>
-            <div style={{ fontSize: 13.5, color: sub, marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{silent ? "아무것도 흐르지 않는다" : artist}</div>
+            <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{songTitle}</div>
+            <div style={{ fontSize: 14, color: sub, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{silent ? "아무것도 흐르지 않는다" : artist}</div>
           </div>
-          <svg width="22" height="22" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-            <path d="M12 20s-7-4.4-9.2-8.6C1.3 8.6 3 5 6.4 5c2 0 3.2 1.1 3.9 2.2.3.4.9.4 1.2 0C12.4 6.1 13.6 5 15.6 5 19 5 20.7 8.6 19.2 11.4 17 15.6 12 20 12 20z" fill={T.accent} />
-          </svg>
+          {icon(<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z" />, 24, "#fff")}
         </div>
 
-        <div style={{ marginTop: 14 }}>
-          <div style={{ position: "relative", height: 4, borderRadius: 2, background: "rgba(255,255,255,.2)" }}>
-            <div className={silent ? "" : "os-prog"} style={{ position: "relative", height: "100%", borderRadius: 2, background: "#fff", width: silent ? "0%" : undefined }}>
-              <span style={{ position: "absolute", right: -5, top: -3, width: 10, height: 10, borderRadius: "50%", background: "#fff" }} />
-            </div>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10.5, color: sub, marginTop: 6 }}>
-            <span>SIDE B</span>
-            <span>33⅓ RPM</span>
+        <div style={{ marginTop: 16 }}>
+          {progress}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: sub, marginTop: 7, fontVariantNumeric: "tabular-nums" }}>
+            <span>{osClock(silent ? 0 : sec)}</span>
+            <span>{"-" + osClock(silent ? dur : dur - sec)}</span>
           </div>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "8px 6px 0" }}>
-          <span style={{ fontSize: 17, color: sub }}>⇄</span>
-          <svg width="26" height="26" viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z" fill="#fff" /></svg>
-          <div className={silent ? "" : "os-pulse"} style={{ width: 50, height: 50, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <svg width="22" height="22" viewBox="0 0 24 24">
-              <path d={silent ? "M8 5l12 7-12 7z" : "M7 5h4v14H7zM13 5h4v14h-4z"} fill="#000" />
-            </svg>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", margin: "6px 0 0" }}>
+          {icon(
+            <g>
+              <path d="M16 3h5v5" />
+              <path d="M4 20L21 3" />
+              <path d="M21 16v5h-5" />
+              <path d="M15 15l6 6" />
+              <path d="M4 4l5 5" />
+            </g>,
+            22,
+            "#fff"
+          )}
+          {icon(
+            <g>
+              <path d="M19 20L9 12l10-8z" fill="#fff" />
+              <path d="M5 19V5" strokeWidth="2.6" />
+            </g>,
+            30,
+            "#fff"
+          )}
+          <div className={silent ? "" : "os-pulse"} style={{ width: 62, height: 62, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {icon(silent ? <path d="M8 5l12 7-12 7z" fill="#000" stroke="none" /> : <g fill="#000" stroke="none"><rect x="6" y="4.5" width="4" height="15" rx="1" /><rect x="14" y="4.5" width="4" height="15" rx="1" /></g>, 28, "#000")}
           </div>
-          <svg width="26" height="26" viewBox="0 0 24 24"><path d="M16 5h2v14h-2zM4 5l11 7-11 7z" fill="#fff" /></svg>
-          <span style={{ fontSize: 17, color: T.accent }}>↻</span>
+          {icon(
+            <g>
+              <path d="M5 4l10 8-10 8z" fill="#fff" />
+              <path d="M19 5v14" strokeWidth="2.6" />
+            </g>,
+            30,
+            "#fff"
+          )}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+            {icon(
+              <g>
+                <path d="M17 1l4 4-4 4" />
+                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                <path d="M7 23l-4-4 4-4" />
+                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+              </g>,
+              22,
+              T.accent
+            )}
+            <span style={{ width: 4, height: 4, borderRadius: "50%", background: T.accent }} />
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "14px 0 4px" }}>
+          {icon(
+            <g>
+              <rect x="5" y="2" width="14" height="20" rx="2" />
+              <circle cx="12" cy="14" r="4" />
+              <path d="M12 6h.01" />
+            </g>,
+            16,
+            T.accent
+          )}
+          <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: T.accent, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{source || "어디선가"}</span>
+          {icon(
+            <g>
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+              <path d="M16 6l-4-4-4 4" />
+              <path d="M12 2v13" />
+            </g>,
+            18,
+            sub
+          )}
+          {icon(
+            <g>
+              <path d="M8 6h13M8 12h13M8 18h13" />
+              <path d="M3 6h.01M3 12h.01M3 18h.01" />
+            </g>,
+            18,
+            sub,
+            { marginLeft: 14 }
+          )}
         </div>
       </div>
 
-      {metaChips.length ? (
-        <div className="os-rise" style={{ display: "flex", flexWrap: "wrap", gap: 6, padding: "0 12px 12px", animationDelay: ".05s" }}>
-          {metaChips.map((m, i) => (
-            <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 14, background: "#2a2a2a", fontSize: 12, wordBreak: "keep-all" }}>
-              <span>{m[0]}</span>
-              <span>{m[1]}</span>
-            </span>
-          ))}
-        </div>
-      ) : null}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 14, padding: "14px 16px 18px" }}>
+        {lyricLines.length ? (
+          <div className="os-rise" style={{ flex: "1 1 100%", background: T.card, borderRadius: 10, padding: "16px 16px 18px", animationDelay: ".05s" }}>
+            <div style={{ fontSize: 15, fontWeight: 800, marginBottom: 12 }}>지금 여기</div>
+            {lyricLines.map((l, i) => (
+              <div key={i} style={{ fontSize: 19, fontWeight: 800, lineHeight: 1.45, letterSpacing: -0.3, color: l[1] ? "#fff" : "rgba(0,0,0,.5)", wordBreak: "keep-all" }}>
+                {l[0]}
+              </div>
+            ))}
+          </div>
+        ) : null}
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, padding: "0 12px 14px" }}>
-        {card(
+        {bare(
           "score",
           "금주 · 금연",
           "SCOREBOARD",
-          <div style={{ display: "flex", gap: 8, padding: "10px 4px 8px", borderRadius: 8, background: "#0c0c0c", boxShadow: "inset 0 0 0 1px #262626" }}>
+          <div style={{ display: "flex", gap: 8, padding: "12px 6px 10px", borderRadius: 10, background: "#0b0b0b", boxShadow: "inset 0 0 0 1px #262626" }}>
             {scoreCol("금주", "DRY", sober, 0.15)}
             <div style={{ width: 1, background: "#262626" }} />
             {scoreCol("금연", "NO SMOKE", smokeFree, 0.3)}
           </div>,
-          { delay: ".08s" }
+          ".1s"
         )}
-        {card("wallet", "지갑", "RECEIPT", receipt, { delay: ".14s" })}
+        {bare("wallet", "지갑", "RECEIPT", receipt, ".15s")}
+
         {card(
           "body",
           "몸 상태",
@@ -317,106 +398,112 @@ function Orsonstatus(props = {}) {
           bodyItems.length ? (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {bodyItems.map((b, i) => (
-                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 14, background: "#2c2c2c", fontSize: 12.5 }}>
+                <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 16, background: "rgba(255,255,255,.1)", fontSize: 13 }}>
                   <span>{osBodyIcon(b)}</span>
                   <span>{b}</span>
                 </span>
               ))}
             </div>
           ) : (
-            <div style={{ fontSize: 12.5, color: sub }}>그럭저럭 멀쩡하다.</div>
+            <div style={{ fontSize: 13, color: sub }}>그럭저럭 멀쩡하다.</div>
           ),
-          { delay: ".2s" }
+          ".2s"
         )}
         {card(
           "goal",
-          "오손이 원하는 것",
+          "다음 곡",
           "NEXT UP",
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 38, height: 38, borderRadius: 4, flexShrink: 0, background: "linear-gradient(135deg, " + T.accent + ", " + T.bar + ")", display: "flex", alignItems: "center", justifyContent: "center", color: "#111", fontWeight: 900, fontSize: 16 }}>≡</div>
-            <div style={{ fontSize: 13, lineHeight: 1.45, wordBreak: "keep-all" }}>{goal || "딱히 없다. 조용히 있고 싶다."}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ width: 46, height: 46, borderRadius: 4, flexShrink: 0, background: "linear-gradient(135deg, " + T.accent + ", " + T.card + ")", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              {icon(<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />, 20, "rgba(0,0,0,.6)")}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, lineHeight: 1.4, wordBreak: "keep-all" }}>{goal || "딱히 없다. 조용히 있고 싶다."}</div>
+              <div style={{ fontSize: 12.5, color: sub, marginTop: 2 }}>Orson Callahan</div>
+            </div>
           </div>,
-          { delay: ".26s" }
+          ".25s"
         )}
-        {card(
-          "stage",
-          "관계",
-          "SIDE A",
-          <div>
-            {OS_STAGE.map((s, i) => {
-              const n = i + 1;
-              const cur = n === stage;
-              const done = n < stage;
-              return (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "6px 4px", borderRadius: 6, background: cur ? "rgba(255,255,255,.06)" : "transparent", opacity: n > stage ? 0.4 : 1 }}>
-                  <span style={{ width: 16, display: "inline-flex", justifyContent: "center", fontSize: 13, color: sub }}>{cur ? eq(12, T.accent) : done ? "✓" : n}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: cur ? 800 : 500, color: cur ? T.accent : "#fff" }}>{s.kr}</div>
+
+        <div className="os-rise" style={{ flex: "1 1 100%", animationDelay: ".3s" }}>
+          {heading("관계", "SIDE A")}
+          {OS_STAGE.map((s, i) => {
+            const n = i + 1;
+            const cur = n === stage;
+            const locked = n > stage;
+            return (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0", opacity: locked ? 0.4 : 1 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 15, fontWeight: cur ? 700 : 500, color: cur ? T.accent : "#fff" }}>
+                    {cur ? eq(12, T.accent) : null}
+                    <span>{s.kr}</span>
                   </div>
-                  <span style={{ fontSize: 11, color: sub }}>{n > stage ? "🔒" : s.en}</span>
+                  <div style={{ fontSize: 12.5, color: sub, marginTop: 3 }}>{s.en + " · Orson Callahan"}</div>
                 </div>
-              );
-            })}
-          </div>,
-          { delay: ".32s", style: { flexBasis: "100%" } }
-        )}
+                <span style={{ fontSize: locked ? 13 : 18, color: sub, letterSpacing: 1 }}>{locked ? "🔒" : "···"}</span>
+              </div>
+            );
+          })}
+        </div>
+
         {card(
           "known",
-          "오손이 아는 당신",
-          "CREDITS",
+          "크레딧",
+          "WHAT ORSON KNOWS",
           known.length ? (
-            <div style={{ display: "grid", gap: 6 }}>
+            <div style={{ display: "grid", gap: 11 }}>
               {known.map((k, i) => (
-                <div key={i} style={{ display: "flex", gap: 8, fontSize: 12.5, lineHeight: 1.45, wordBreak: "keep-all" }}>
-                  <span style={{ color: T.accent, flexShrink: 0 }}>●</span>
-                  <span>{k}</span>
+                <div key={i} style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, wordBreak: "keep-all" }}>{k.text}</div>
+                  {k.name ? <div style={{ fontSize: 12.5, color: sub, marginTop: 1 }}>{k.name}</div> : null}
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{ fontSize: 12.5, color: sub }}>아직 아는 게 없다.</div>
+            <div style={{ fontSize: 13, color: sub }}>아직 아는 게 없다.</div>
           ),
-          { delay: ".38s" }
+          ".35s"
         )}
         {card(
           "town",
           "동네 사정",
           "AROUND TOWN",
           threads.length ? (
-            <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ display: "grid", gap: 12 }}>
               {threads.map((t, i) => (
-                <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start" }}>
-                  <div style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, background: "hsl(" + osHue(t.name || t.text) + ", 38%, 42%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11.5, fontWeight: 800 }}>{(t.name || "?").slice(0, 1)}</div>
-                  <div style={{ minWidth: 0, fontSize: 12.5, lineHeight: 1.45, wordBreak: "keep-all" }}>
-                    {t.name ? <div style={{ fontWeight: 700 }}>{t.name}</div> : null}
-                    <div style={{ color: "#d0d0d0" }}>{t.text}</div>
+                <div key={i} style={{ display: "flex", gap: 11, alignItems: "center" }}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", flexShrink: 0, background: "hsl(" + osHue(t.name || t.text) + ", 35%, 40%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800 }}>{(t.name || "?").slice(0, 1)}</div>
+                  <div style={{ minWidth: 0, wordBreak: "keep-all" }}>
+                    <div style={{ fontSize: 14, fontWeight: 700 }}>{t.name || "누군가"}</div>
+                    <div style={{ fontSize: 12.5, color: sub, marginTop: 1, lineHeight: 1.4 }}>{t.text}</div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{ fontSize: 12.5, color: sub }}>동네는 조용하다.</div>
+            <div style={{ fontSize: 13, color: sub }}>동네는 조용하다.</div>
           ),
-          { delay: ".44s" }
+          ".4s"
         )}
         {card(
           "bench",
-          "걸려 있는 일",
+          "작업대 위",
           "ON THE BENCH",
           pending.length ? (
-            <div style={{ display: "grid", gap: 7 }}>
+            <div style={{ display: "grid", gap: 8 }}>
               {pending.map((t, i) => (
-                <div key={i} style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, padding: "6px 10px 6px 22px", background: "#e9dcc0", color: "#3a3020", fontSize: 12.5, clipPath: "polygon(12px 0, 100% 0, 100% 100%, 12px 100%, 0 50%)", wordBreak: "keep-all" }}>
-                  <span style={{ position: "absolute", left: 9, top: "50%", width: 6, height: 6, marginTop: -3, borderRadius: "50%", background: "#1e1e1e" }} />
-                  <span style={{ flex: 1, minWidth: 0 }}>{t.what}</span>
-                  {t.due ? <span style={{ flexShrink: 0, fontSize: 11, fontWeight: 800, color: "#a3281f" }}>{t.due}</span> : null}
+                <div key={i} style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px 8px 24px", background: "#efe6d2", color: "#3b3326", fontSize: 13, clipPath: "polygon(13px 0, 100% 0, 100% 100%, 13px 100%, 0 50%)", wordBreak: "keep-all" }}>
+                  <span style={{ position: "absolute", left: 10, top: "50%", width: 6, height: 6, marginTop: -3, borderRadius: "50%", background: "#2a2a2a" }} />
+                  <span style={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{t.what}</span>
+                  {t.due ? <span style={{ flexShrink: 0, fontSize: 11.5, fontWeight: 800, color: "#b23a2e" }}>{t.due}</span> : null}
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{ fontSize: 12.5, color: sub }}>작업대가 비었다. 드문 일이다.</div>
+            <div style={{ fontSize: 13, color: sub }}>작업대가 비었다. 드문 일이다.</div>
           ),
-          { delay: ".5s", style: { flexBasis: "100%" } }
+          ".45s",
+          true
         )}
       </div>
     </div>
@@ -425,9 +512,9 @@ function Orsonstatus(props = {}) {
   return (
     <div style={{ fontFamily: font, color: "#fff", maxWidth: 480, margin: "6px auto", boxSizing: "border-box", WebkitFontSmoothing: "antialiased" }}>
       <style>{OS_CSS}</style>
-      <div style={{ borderRadius: 12, overflow: "hidden", background: open ? "linear-gradient(180deg, " + T.top + " 0px, #121212 340px)" : "transparent", boxShadow: open ? "0 10px 26px rgba(0,0,0,.35)" : "0 4px 12px rgba(0,0,0,.25)", transition: "background .4s ease" }}>
+      <div style={{ borderRadius: open ? 14 : 8, overflow: "hidden", background: open ? "linear-gradient(180deg, " + T.top + " 0px, " + T.top2 + " 300px, #121212 620px)" : "transparent", boxShadow: open ? "0 12px 30px rgba(0,0,0,.35)" : "0 4px 12px rgba(0,0,0,.25)" }}>
         {header}
-        <div style={{ maxHeight: open ? bodyH : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height .55s cubic-bezier(.2,.8,.2,1), opacity .35s ease" }}>
+        <div style={{ maxHeight: open ? bodyH : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height .6s cubic-bezier(.2,.8,.2,1), opacity .35s ease" }}>
           <div ref={bodyRef}>{content}</div>
         </div>
       </div>
@@ -436,11 +523,11 @@ function Orsonstatus(props = {}) {
 }
 
 const OS_THEME = {
-  dawn: { top: "#33415f", bar: "#2b3650", accent: "#9fb4e0", label2: "#5f6f94" },
-  morning: { top: "#7a5c34", bar: "#5e4628", accent: "#f2c46d", label2: "#b98a3e" },
-  day: { top: "#36596a", bar: "#2c4855", accent: "#7fd1b9", label2: "#4f8f84" },
-  evening: { top: "#7c3f2c", bar: "#5f3022", accent: "#f2a06d", label2: "#b4613f" },
-  night: { top: "#232c52", bar: "#1d2445", accent: "#9aa6f2", label2: "#5560a8" },
+  dawn: { top: "#4a5a80", top2: "#26304a", mini: "#36415e", plinth: "#3a4664", card: "#56689a", accent: "#a9bdf0", label2: "#61719a" },
+  morning: { top: "#8f6c3c", top2: "#4a3820", mini: "#6a5130", plinth: "#6b5332", card: "#a8824a", accent: "#f5c86e", label2: "#b98a3e" },
+  day: { top: "#3f6f7e", top2: "#203a42", mini: "#30545f", plinth: "#33585f", card: "#4a8a92", accent: "#86dcc3", label2: "#4f8f84" },
+  evening: { top: "#8e4a33", top2: "#4a261a", mini: "#6b3826", plinth: "#6a3a28", card: "#a85a3e", accent: "#f7a878", label2: "#b4613f" },
+  night: { top: "#2d3870", top2: "#181e3c", mini: "#273060", plinth: "#283166", card: "#4252a0", accent: "#a3aef7", label2: "#5560a8" },
 };
 
 const OS_STAGE = [
@@ -558,29 +645,35 @@ function osHue(name) {
   return h;
 }
 
+function osClock(sec) {
+  const s = Math.max(0, Math.round(sec));
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+
 const OS_CSS = `
 @keyframes osSpin { to { transform: rotate(360deg); } }
 .os-spin { animation: osSpin 1.8s linear infinite; }
 @keyframes osEq { 0% { transform: scaleY(.2); } 100% { transform: scaleY(1); } }
 .os-eq > span { animation: osEq .7s ease-in-out infinite alternate; }
 .os-eq.os-paused > span { animation: none; }
-@keyframes osProg { from { width: 0%; } to { width: 100%; } }
-.os-prog { animation: osProg 48s linear infinite; }
-@keyframes osRise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-.os-rise { animation: osRise .5s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes osRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.os-rise { animation: osRise .55s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes osFlip { 0% { transform: perspective(200px) rotateX(-90deg); opacity: .2; } 60% { transform: perspective(200px) rotateX(12deg); opacity: 1; } 100% { transform: none; } }
 .os-flip { animation: osFlip .55s ease-out both; }
 @keyframes osPrint { from { transform: translateY(-14px); clip-path: inset(0 0 100% 0); } to { transform: none; clip-path: inset(0 0 0 0); } }
-.os-print { animation: osPrint .9s cubic-bezier(.3,.7,.2,1) .15s both; }
+.os-print { animation: osPrint .9s cubic-bezier(.3,.7,.2,1) .2s both; }
 @keyframes osStamp { 0% { opacity: 0; transform: rotate(-8deg) scale(2.2); } 70% { opacity: 1; transform: rotate(-8deg) scale(.92); } 100% { opacity: .9; transform: rotate(-8deg) scale(1); } }
-.os-stamp { animation: osStamp .45s .9s both; }
+.os-stamp { animation: osStamp .45s 1s both; }
 @keyframes osBlink { 50% { opacity: .25; } }
 .os-blink { animation: osBlink 1.1s step-end infinite; }
-@keyframes osPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes osPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
 .os-pulse { animation: osPulse 2.4s ease-in-out infinite; }
-@keyframes osArm { from { transform: rotate(-26deg); } to { transform: rotate(0deg); } }
-.os-arm { transform-origin: 75% 10%; animation: osArm .9s .25s cubic-bezier(.3,.7,.2,1) both; }
+@keyframes osArm { from { transform: rotate(-24deg); } to { transform: rotate(0deg); } }
+.os-arm { animation: osArm 1s .3s cubic-bezier(.3,.7,.2,1) both; }
+.os-arm-rest { transform: rotate(-24deg); }
+@keyframes osGlow { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+.os-glow { animation: osGlow 2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
-  .os-spin, .os-eq > span, .os-prog, .os-rise, .os-flip, .os-print, .os-stamp, .os-blink, .os-pulse, .os-arm { animation: none !important; }
+  .os-spin, .os-eq > span, .os-rise, .os-flip, .os-print, .os-stamp, .os-blink, .os-pulse, .os-arm, .os-glow { animation: none !important; }
 }
 `;
