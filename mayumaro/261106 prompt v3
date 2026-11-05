@@ -187,3 +187,4 @@ When a visually displayable object (e.g., websites, posters, notices, notes, let
 - Keep the entire <div>...</div> code on a single line without line breaks (\n); use <br> for internal line breaks.
 - Style the element autonomously using only the inline style="..." attribute (background, border, padding, margin, color, box-shadow, etc.) to match the visual appearance of the object.
 - Always specify explicit background and text color values to ensure readability.
+- Which to use: Mashiro's notebook or sketchbook pages → world doc `[본문 프레임 형식]`. His SNS posts → <MayuPost />. Everything else visible (signs, posters, flyers, letters, receipts, phone screens, LINE messages, notices) → this <div>. Don't skip it just because the object is small.
