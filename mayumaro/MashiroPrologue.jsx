@@ -93,18 +93,11 @@ function mpPage(onClose) {
           </div>
         </div>
 
+        {mpWobbleDefs()}
         <div className="mp-lines">
           {MP_BLOCKS.map((b, i) =>
-            b.t === "d" ? (
-              <div className={"mp-d" + (b.who === "마시로" ? " mp-d-mashiro" : "")} key={i}>
-                <div className="mp-ja" lang="ja">
-                  <span className="mp-who">{b.who}</span>
-                  {mpMark(b.ja)}
-                </div>
-                <div className="mp-ko">{mpMark(b.ko)}</div>
-              </div>
-            ) : (
-              <p className="mp-n" key={i}>{mpMark(b.text)}</p>
+            b.t === "d" ? mpBalloon(b, i) : (
+              <p className="mp-blk mp-n" key={i}>{mpMark(b.text)}</p>
             )
           )}
         </div>
@@ -123,6 +116,44 @@ function mpPage(onClose) {
         노트 접기
       </button>
     </div>
+  );
+}
+
+/* 만화 말풍선
+   학생: 속삭임 점선 풍선 / 교수: 각진 풍선 / 마시로: 떨리는 선 풍선(오른쪽) */
+const MP_SIDE = { "남학생": "left", "여학생": "right", "교수": "left", "마시로": "right" };
+const MP_KIND = { "남학생": "whisper", "여학생": "whisper", "교수": "box", "마시로": "shaky" };
+
+function mpBalloon(b, i) {
+  const side = MP_SIDE[b.who] || "left";
+  const kind = MP_KIND[b.who] || "box";
+  return (
+    <div className={"mp-blk mp-bal-row mp-" + side} key={i}>
+      <span className={"mp-who mp-who-" + kind}>{b.who}</span>
+      <div className={"mp-bal mp-bal-" + kind}>
+        <div className="mp-bal-shape" aria-hidden="true" />
+        <svg className="mp-tail" width="26" height="20" viewBox="0 0 26 20" aria-hidden="true">
+          <path d="M3 0 C7 7 6 13 2 19 C11 14 17 8 22 0" />
+        </svg>
+        <div className="mp-bal-text">
+          <div className="mp-ja" lang="ja">{mpMark(b.ja)}</div>
+          <div className="mp-ko">{mpMark(b.ko)}</div>
+        </div>
+        {b.sfx ? <span className="mp-sfx" lang="ja" aria-hidden="true">{b.sfx}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+/* 마시로 풍선의 떨리는 선 */
+function mpWobbleDefs() {
+  return (
+    <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true" focusable="false">
+      <filter id="mp-wobble" x="-5%" y="-10%" width="110%" height="120%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7" />
+        <feDisplacementMap in="SourceGraphic" scale="3.2" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </svg>
   );
 }
 
@@ -400,32 +431,82 @@ const MP_CSS = `
 .mp-title span { background: linear-gradient(transparent 58%, #fbd2dc 58%, #fbd2dc 92%, transparent 92%); padding: 0 6px; }
 
 .mp-lines {
-  padding: 0 18px 0 calc(var(--mp-mx) + 14px);
-  background-image:
-    linear-gradient(to right, transparent 0, transparent var(--mp-mx), var(--mp-margin) var(--mp-mx), var(--mp-margin) calc(var(--mp-mx) + 1.5px), transparent calc(var(--mp-mx) + 1.5px)),
-    repeating-linear-gradient(to bottom, transparent 0, transparent 29px, var(--mp-rule) 29px, var(--mp-rule) 30px);
+  background-image: linear-gradient(to right, transparent 0, transparent var(--mp-mx), var(--mp-margin) var(--mp-mx), var(--mp-margin) calc(var(--mp-mx) + 1.5px), transparent calc(var(--mp-mx) + 1.5px));
 }
-.mp-n, .mp-ko {
+.mp-blk {
   margin: 0;
-  font-size: 16px; line-height: 30px;
+  padding: 0 18px 30px calc(var(--mp-mx) + 14px);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent 29px, var(--mp-rule) 29px, var(--mp-rule) 30px);
+}
+.mp-n {
+  font-size: 16px; line-height: 30px; color: var(--mp-ink-soft);
   word-break: keep-all; overflow-wrap: break-word;
 }
-.mp-n { color: var(--mp-ink-soft); margin-bottom: 30px; }
-.mp-d { margin: 0 0 30px; padding-left: 10px; border-left: 2.5px solid #c9d5e8; }
-.mp-d-mashiro { border-left-color: var(--mp-pink); }
-.mp-ko { color: var(--mp-ink); }
+
+/* ---- 말풍선 ---- */
+.mp-bal-row { display: flex; flex-direction: column; align-items: flex-start; padding-top: 4px; padding-bottom: 34px; }
+.mp-bal-row.mp-right { align-items: flex-end; }
+.mp-bal {
+  position: relative;
+  max-width: calc(100% - 34px);
+  padding: 12px 20px 13px;
+  margin-top: 5px;
+}
+.mp-bal-shape { position: absolute; inset: 0; border: 2px solid #3c404d; background: #fff; }
+.mp-bal-text { position: relative; z-index: 2; }
 .mp-ja {
   font-family: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", "Hiragino Sans", sans-serif; font-weight: 500;
-  font-size: 14.5px; line-height: 30px; color: var(--mp-ja);
+  font-size: 14px; line-height: 22px; color: var(--mp-ja);
   line-break: strict; overflow-wrap: anywhere;
 }
+.mp-ko {
+  margin-top: 3px;
+  font-size: 16px; line-height: 26px; color: var(--mp-ink);
+  word-break: keep-all; overflow-wrap: break-word;
+}
+
+.mp-tail { position: absolute; z-index: 1; bottom: -17px; left: 30px; overflow: visible; }
+.mp-tail path { fill: #fff; stroke: #3c404d; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.mp-right .mp-tail { left: auto; right: 30px; transform: scaleX(-1); }
+
+/* 학생: 속삭임 점선 */
+.mp-bal-whisper .mp-bal-shape { border: 2px dashed #737b8f; border-radius: 34px / 28px; }
+.mp-bal-whisper .mp-tail path { stroke: #737b8f; stroke-dasharray: 4 3; }
+
+/* 교수: 각진 풍선 */
+.mp-bal-box .mp-bal-shape { border-radius: 8px; border-width: 2.2px; }
+
+/* 마시로: 떨리는 선, 분홍빛 */
+.mp-bal-shaky .mp-bal-shape {
+  border: 2px solid #6e4656; background: #fff4f7;
+  border-radius: 36px 30px 38px 28px / 30px 36px 28px 34px;
+  filter: url(#mp-wobble);
+}
+.mp-bal-shaky .mp-tail { filter: url(#mp-wobble); }
+.mp-bal-shaky .mp-tail path { stroke: #6e4656; fill: #fff4f7; }
+
+/* 화자 이름표 */
 .mp-who {
-  display: inline-block; vertical-align: 1px;
-  margin-right: 8px; padding: 0 8px;
+  display: inline-block;
+  padding: 0 9px;
   font-family: "Gowun Dodum", "Noto Sans KR", sans-serif; font-size: 12px; line-height: 20px;
   color: #4d6081; background: #e7edf6; border-radius: 999px;
 }
-.mp-d-mashiro .mp-who { color: var(--mp-pink-deep); background: #fbe2e9; }
+.mp-right .mp-who { margin-right: 8px; }
+.mp-bal-row.mp-left .mp-who { margin-left: 8px; }
+.mp-who-shaky { color: var(--mp-pink-deep); background: #fbe2e9; }
+.mp-who-box { color: #4a4d58; background: #eceae4; }
+
+/* 만화 효과음(세로쓰기) */
+.mp-sfx {
+  position: absolute; top: 50%; transform: translateY(-50%) rotate(6deg);
+  writing-mode: vertical-rl; text-orientation: upright;
+  font-family: "Klee One", sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0.06em; line-height: 1;
+  color: #8b8f9b; white-space: nowrap;
+}
+.mp-left .mp-sfx { right: -28px; }
+.mp-right .mp-sfx { left: -28px; transform: translateY(-50%) rotate(-6deg); color: #c56a85; }
+
 .mp-mark { text-decoration: underline wavy #e07b93; text-decoration-thickness: 1.5px; text-underline-offset: 4px; }
 
 .mp-foot {
@@ -463,7 +544,8 @@ const MP_CSS = `
   .mp-critter-cover { position: absolute; right: -4px; bottom: -10px; }
   .mp-critter-cover svg { width: 48px; height: 48px; }
   .mp-cover-body { padding-right: 34px; }
-  .mp-lines { padding-right: 14px; padding-left: calc(var(--mp-mx) + 10px); }
+  .mp-blk { padding-right: 14px; padding-left: calc(var(--mp-mx) + 10px); }
+  .mp-bal { padding: 11px 16px 12px; }
   .mp-head, .mp-title-row { padding-left: calc(var(--mp-mx) + 10px); }
   .mp-title-row { padding-right: 12px; }
   .mp-title { font-size: 27px; }
@@ -485,7 +567,7 @@ const MP_CSS = `
 `;
 
 const MP_BLOCKS = [
-  {"t": "d", "who": "남학생", "ja": "「ねえねえ、この漫画…すっげぇエロくね？」", "ko": "\"야, 이 만화… 장난 아니게 야하지 않냐?\""},
+  {"t": "d", "who": "남학생", "ja": "「ねえねえ、この漫画…すっげぇエロくね？」", "ko": "\"야, 이 만화… 장난 아니게 야하지 않냐?\"", "sfx": "ヒソヒソ"},
   {"t": "n", "text": "강의실 중간 언저리에 나란히 앉은 남학생이 옆자리 여학생 쪽으로 스마트폰 화면을 슬며시 내밀며 속닥거렸다."},
   {"t": "d", "who": "여학생", "ja": "「あ、これ知ってる！」", "ko": "\"아, 나 이거 알아!\""},
   {"t": "d", "who": "남학생", "ja": "「え～すけべぇ～」", "ko": "\"에이~ 변태구만~.\""},
@@ -494,7 +576,7 @@ const MP_BLOCKS = [
   {"t": "n", "text": "점심을 먹기 전도 아니고 먹은 직후도 아닌 어중간한 시간에 걸쳐 버린 이 수업은 늘 강의실이 한산했다. 교양 '미학 입문'이라는, 듣기만 해도 하품이 절로 나오는 정직한 강의명도 공석 창출에 한몫 단단히 거들고 있을 터였다."},
   {"t": "n", "text": "하지만 이 무료한 강의실 구석, 누군가에게만큼은 이 수업이 일주일에 단 한 번 찾아오는 '인생 구원의 시간'이었다."},
   {"t": "n", "text": "강의실 맨 뒷줄 구석, 좁은 일체형 책상에 커다란 덩치를 구겨 넣은 마시로의 시선이 단 한 곳에 진득하게 꽂혀 있었다. 정확히 세 줄 앞, 햇살이 부서지는 창가 자리. 두꺼운 뿔테 안경 너머로 피사체를 좇는 눈동자가 바쁘게 움직이고, 큼직한 손에 쥔 4B 연필이 크로키북 위를 사각거리며 경쾌하게 미끄러졌다."},
-  {"t": "d", "who": "마시로", "ja": "「あかん…今日も線がええ…めっちゃええで…」", "ko": "\"아이고 마, 큰일 났네… 오늘도 선이 억수로 좋다 아이가…\""},
+  {"t": "d", "who": "마시로", "ja": "「あかん…今日も線がええ…めっちゃええで…」", "ko": "\"아이고 마, 큰일 났네… 오늘도 선이 억수로 좋다 아이가…\"", "sfx": "カリカリ"},
   {"t": "n", "text": "목탄의 끝이 피사체의 목덜미에서 어깨로 떨어지는 매끄러운 곡선, 날렵한 턱선과 콧대를 거침없이 낚아챈다. 숨소리조차 죽인 채 코끝이 종이에 닿을 듯 말 듯 몰입하던 찰나, 과집중 끝에 뒤늦은 이성이 퍽 하고 뒤통수를 후려쳤다."},
   {"t": "n", "text": "물론 마시로 본인도 잘 알고 있다. 아무리 작화 연습이라지만 남의 뒷모습을 허락도 없이 훔쳐 그리는 건 누가 봐도 수상한 짓거리라는 걸! 머리로는 백번 천번 알면서도, 홀린 듯 움직이는 이 야속한 손을 멈출 수가 없으니 미칠 노릇이었다."},
   {"t": "n", "text": "가뜩이나 그늘진 마시로의 얼굴이 금방이라도 울음을 터뜨릴 듯 쭈글쭈글하게 구겨졌다. 훌쩍이는 와중에도 손목만큼은 프로의 머슬 메모리를 발휘해 사각사각 맹렬하게 선을 쌓아 올리고 있으니, 참으로 눈물겨운 장인 정신이 아닐 수 없었다."},
@@ -504,7 +586,7 @@ const MP_BLOCKS = [
   {"t": "n", "text": "쿵, 쿵. 흉곽 안에서 심장이 콩알만 하게 쪼그라들어 방망이질을 해댔다. 초등학교, 중학교, 고등학교를 거쳐 대학생이 된 지금까지도 이 순간만 다가오면 양 손바닥이 식은땀으로 축축해지고 만다."},
   {"t": "d", "who": "교수", "ja": "「えー、次ー。……ええと。シンバイウガワ、くん？」", "ko": "\"어, 다음. ……음, 신바이우가와 군?\""},
   {"t": "n", "text": "……역시나. 개강 이후 단 한 주도 빠짐없이, 이번 주로 벌써 다섯 번째 개명이다."},
-  {"t": "d", "who": "마시로", "ja": "「……まつゆかわ、です……」", "ko": "\"……마츠유카와, 입니다…….\""},
+  {"t": "d", "who": "마시로", "ja": "「……まつゆかわ、です……」", "ko": "\"……마츠유카와, 입니다…….\"", "sfx": "ぷるぷる"},
   {"t": "n", "text": "정정해야 할지 그냥 넘어갈지 머릿속이 약 2초간 과부하에 걸렸다가, 마침내 모기만 한 목소리를 겨우 쥐어짜 냈다. 그래 봤자 다음 주에도, 아니 졸업장을 받을 때까지도 저 교수님에게 자신은 영원히 '신바이우가와'일 것이다. 평생 그래 왔으니까."},
   {"t": "n", "text": "여기저기서 풉, 하고 새어 나오는 웃음소리에 마시로는 화끈거리는 두 뺨을 펑퍼짐한 후드티 소매에 푹 파묻었다. 그나마 다행이라면 다행이었다. 자기 성씨 하나 제대로 정정하지 못해 벌벌 떠는 이 맹한 남자가, 방금 앞자리 학생들이 속닥거리던 여성향 웹코믹 플랫폼 '루넬'의 최고 수위 인기 작가 '마유마로'라는 걸 대체 누가 상상이나 하겠는가."}
 ];
