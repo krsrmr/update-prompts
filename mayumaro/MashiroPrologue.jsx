@@ -102,12 +102,16 @@ function mpPage(onClose) {
           )}
         </div>
 
-        <div className="mp-foot" aria-hidden="true">
-          <div className="mp-sketch">{mpSketch()}</div>
-          <div className="mp-foot-notes">
-            <span className="mp-scribble" lang="ja">線がええ…</span>
-            <span className="mp-tsuzuku" lang="ja">つづく</span>
+        <div className="mp-foot">
+          <div className="mp-cont">
+            <span className="mp-spark mp-spark-a" aria-hidden="true">✦</span>
+            <span className="mp-spark mp-spark-b" aria-hidden="true">✦</span>
+            <span className="mp-spark mp-spark-c" aria-hidden="true">♥</span>
+            <div className="mp-cont-critter" aria-hidden="true">{mpCritter(44)}</div>
+            <div className="mp-ribbon"><span lang="ja">つづく</span></div>
           </div>
+          <div className="mp-cont-ko">아래에서 계속!</div>
+          <div className="mp-cont-arrow" aria-hidden="true">{mpDownArrow()}</div>
         </div>
         <div className="mp-dogear" aria-hidden="true" />
       </div>
@@ -292,19 +296,13 @@ function mpBookIcon() {
   );
 }
 
-/* 연필 크로키: 목덜미에서 어깨로 이어지는 선 */
-function mpSketch() {
-  const s = { fill: "none", stroke: "#8c909b", strokeLinecap: "round" };
+/* 아래를 가리키는 손그림 화살표 */
+function mpDownArrow() {
+  const st = { fill: "none", stroke: "#d9708c", strokeWidth: 2.6, strokeLinecap: "round", strokeLinejoin: "round" };
   return (
-    <svg width="150" height="92" viewBox="0 0 150 92">
-      <path d="M40 8 C44 26 46 40 44 52 C42 60 30 66 12 72" {...s} strokeWidth="1.5" />
-      <path d="M41 10 C45 27 47 41 45 53" {...s} strokeWidth="0.8" opacity="0.6" />
-      <path d="M44 52 C60 58 92 60 138 66" {...s} strokeWidth="1.5" />
-      <path d="M46 54 C62 60 94 62 136 68" {...s} strokeWidth="0.8" opacity="0.55" />
-      <path d="M62 6 C64 18 66 28 70 36 C76 42 84 44 96 44" {...s} strokeWidth="1.3" />
-      <path d="M70 36 C66 40 62 46 60 54" {...s} strokeWidth="1" opacity="0.7" />
-      <path d="M50 60 L56 52 M56 61 L62 53 M62 62 L68 54 M68 62 L74 55 M74 63 L80 56" {...s} strokeWidth="0.8" opacity="0.6" />
-      <path d="M20 84 C50 80 92 82 128 86" {...s} strokeWidth="0.7" opacity="0.35" />
+    <svg width="34" height="34" viewBox="0 0 34 34">
+      <path d="M8 6 L17 14 L26 6" {...st} />
+      <path d="M8 17 L17 25 L26 17" {...st} opacity="0.55" />
     </svg>
   );
 }
@@ -620,14 +618,46 @@ const MP_CSS = `
 .mp-prof-stats b { color: #222027; font-size: 14px; font-variant-numeric: tabular-nums; }
 .mp-prof-heart b { color: #d63c72; }
 
+/* ---- 아래에서 계속! ---- */
 .mp-foot {
-  display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;
-  padding: 0 22px 26px calc(var(--mp-mx) + 6px);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 18px 16px 34px;
 }
-.mp-sketch { line-height: 0; opacity: 0.95; }
-.mp-foot-notes { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; padding-bottom: 6px; }
-.mp-scribble { font-family: "Klee One", sans-serif; font-size: 15px; color: var(--mp-pencil); transform: rotate(-4deg); }
-.mp-tsuzuku { font-family: "Klee One", sans-serif; font-weight: 600; font-size: 19px; color: #3a3d48; border-bottom: 2px solid var(--mp-pink); padding: 0 2px; }
+.mp-cont { position: relative; display: inline-flex; filter: drop-shadow(0 2px 3px rgba(150,60,90,0.25)); }
+.mp-ribbon {
+  position: relative;
+  padding: 7px 36px 6px;
+  background: linear-gradient(180deg, #ec93aa, #db7391);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 14px) 50%, 100% 100%, 0 100%, 14px 50%);
+}
+.mp-ribbon span {
+  display: block;
+  padding: 2px 6px;
+  border-top: 1.5px dashed rgba(255,255,255,0.75);
+  border-bottom: 1.5px dashed rgba(255,255,255,0.75);
+  font-family: "Klee One", "Zen Maru Gothic", sans-serif; font-weight: 600; font-size: 21px; line-height: 1.3;
+  letter-spacing: 0.18em; color: #fff; text-shadow: 0 1px 0 rgba(150,40,80,0.35);
+}
+.mp-cont-critter {
+  position: absolute; z-index: 2; left: -30px; top: -20px;
+  line-height: 0; padding: 2px; background: #fff; border-radius: 50%;
+  transform: rotate(-14deg);
+  box-shadow: 0 1px 3px rgba(60,40,60,0.25);
+}
+.mp-spark { position: absolute; z-index: 2; line-height: 1; }
+.mp-spark-a { top: -14px; right: -8px; font-size: 16px; color: #f2b84b; transform: rotate(12deg); }
+.mp-spark-b { bottom: -10px; right: 18px; font-size: 11px; color: #f2b84b; }
+.mp-spark-c { top: -12px; right: 24px; font-size: 11px; color: #e07b93; transform: rotate(-10deg); }
+.mp-cont-ko {
+  margin-top: 12px;
+  font-family: "Gaegu", "Gowun Dodum", sans-serif; font-weight: 700; font-size: 22px; line-height: 1.2;
+  color: #8a3550; letter-spacing: -0.01em;
+}
+.mp-cont-arrow { margin-top: 2px; line-height: 0; animation: mpBob 1.4s ease-in-out infinite; }
+@keyframes mpBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(5px); }
+}
 .mp-dogear {
   position: absolute; right: 0; bottom: 0; width: 30px; height: 30px;
   background: linear-gradient(135deg, var(--mp-paper) 0, var(--mp-paper) 50%, #e9e6df 50%, #f4f1ea 100%);
@@ -667,12 +697,13 @@ const MP_CSS = `
   .mp-doodle svg { width: 96px; height: 27px; }
   .mp-mini-star { left: 32px; top: 6px; }
   .mp-mini-heart { right: 70px; top: 88px; }
-  .mp-foot { padding-left: calc(var(--mp-mx) + 4px); }
-  .mp-sketch svg { width: 120px; height: 74px; }
+  .mp-ribbon { padding: 6px 30px 5px; }
+  .mp-ribbon span { font-size: 19px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .mp-open { animation: none; }
+  .mp-cont-arrow { animation: none; }
   .mp-btn-open { transition: none; }
 }
 `;
