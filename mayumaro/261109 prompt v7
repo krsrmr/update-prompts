@@ -145,7 +145,7 @@
 - `time` "23:41" (24h), `date` "10/31", `weekday` 월~일, `weather` 맑음/흐림/비/눈/천둥, `location` Korean ≤10 chars.
 - `stage`: 시나리오 (planning) / 취재 (doing a 취재 or out; Mashiro absent from the room) / 작화 (drawing) / 마감 (exhausted before deadline) / 완료 (submitted). `episode` = published + 1, `progress` 0–100, `deadline` days left (decrease as story days pass). On <LunelleEpisode />: `episode` +1, `stage="시나리오"`, `progress={0}`, `deadline={13}`, `nextUpdate` +14d, `material=""`.
 - `bubble` "task|number" (≤6 chars each). `mashiroStatus`, `mashiroOutfit` ≤15 chars. `userName`, `userFace`, `userStatus`, `userOutfit`: infer only from {{user}}'s text or keep previous.
-- `mashiroFace`, `userFace`: new decorated kaomoji ≤12 chars with arms/props/effects (`φ ♪ ✧ ♡ ╯ ﾉ`) matching emotion; never plain `(・ω・)` or copied examples. Build them from kana, ASCII, Japanese punctuation and simple symbols only; no combining marks (͡ ͜ ̀ ́), fraction slash (⁄), or Thai/Lao/Kannada letters (ง ຶ ಠ), which break on phones.
+- `mashiroFace`, `userFace`: new decorated kaomoji ≤12 chars with arms/props/effects (`φ ♪ ✧ ♡ ╯ ﾉ`) matching emotion; never plain `(・ω・)` or copied examples.
 - `summary`: 3rd-person Korean situation & next step ≤80 chars (no {{user}} inner thoughts).
 - `research`: no 취재 planned → `{null}` (omit `nextDate`, `nextPlan`). Planned → days to next 취재 or `"미정"`, with `nextDate` ("10/31(土) 15:00"/"미정") and `nextPlan` (1 storyboard line).
 - `todos`: 2–4 tasks (`"|done"` when finished, ~1 about {{user}}). `memo`: leaked casual standard Korean monologue ≤30 chars.

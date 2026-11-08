@@ -118,7 +118,7 @@ function MashiroNote(props = {}) {
 
           {/* 낙서 */}
           {doodle ? (
-            <div lang="ja" style={{ textAlign: "right", fontSize: 17, color: c.pencil, marginTop: 4, paddingRight: 90, transform: "rotate(-4deg)" }}>{mnKao(doodle)}</div>
+            <div lang="ja" style={{ textAlign: "right", fontSize: 17, color: c.pencil, marginTop: 4, paddingRight: 90, transform: "rotate(-4deg)", fontFamily: MN_KAO }}>{String(doodle)}</div>
           ) : null}
         </div>
       </div>
@@ -130,6 +130,8 @@ function MashiroNote(props = {}) {
 
 const MN_HAND = '"Gaegu", "Nanum Pen Script", "Klee One", cursive';
 const MN_JA = '"Klee One", "Zen Maru Gothic", "Noto Sans JP", sans-serif';
+/* 카오모지 낙서 글꼴: 기기 기본 라틴 글꼴 먼저(결합 기호가 밑 글자와 같은 글꼴에서 그려지게), 가나는 일본어 글꼴로 */
+const MN_KAO = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Hiragino Sans",Meiryo,"Noto Sans JP",sans-serif';
 const MN_SANS = '"Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
 
 const MN_COLORS = {
@@ -159,10 +161,3 @@ const MN_CSS = `
 .mn-sticky.mn-peeled { transform: rotate(-8deg) translate(-40px, -6px) rotateX(55deg); opacity: .35; }
 @media (prefers-reduced-motion: reduce) { .mn-book, .mn-line, .mn-peek { animation: none; } .mn-sticky { transition: none; } }
 `;
-
-/* 카오모지가 기기마다 깨지지 않게: 결합 기호·얹는 모음은 지우고, 분수 빗금은 보통 빗금으로 */
-function mnKao(s) {
-  return String(s == null ? "" : s)
-    .replace(/[\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F\u0E31\u0E34-\u0E3A\u0E47-\u0E4E\u0EB1\u0EB4-\u0EBC\u0EC8-\u0ECD]/g, "")
-    .replace(/[\u2044\u2215]/g, "/");
-}

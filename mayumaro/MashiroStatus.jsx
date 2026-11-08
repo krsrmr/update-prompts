@@ -480,6 +480,9 @@ function MashiroStatus(props = {}) {
 
 /* ───────── 보조 요소 ───────── */
 
+/* 카오모지 글꼴: 기기의 기본 라틴 글꼴(아이폰 SF, 안드로이드 Roboto, 윈도우 Segoe UI)을 먼저 쓴다.
+   결합 기호(͡ ͜ ̀ ́)와 그 밑 글자가 한 글꼴에서 함께 그려져야 위치가 맞기 때문. 가나·한자는 뒤의 일본어 글꼴로 넘어간다. */
+const MS_KAO_FONT = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,"Noto Sans JP","Noto Sans CJK JP",sans-serif';
 const MS_INK = "#2b2420";
 const MS_C = { ink: MS_INK, red: "#e0442e", blue: "#2f80a8" };
 const MS_IMG = "https://mayumaro.vercel.app/img/status/";
@@ -531,15 +534,9 @@ function msDate(d, w) {
 
 /* 반각 탁점·반탁점(ﾞ ﾟ)은 앞 글자에 달라붙는 글자다. ✧ﾟ처럼 다른 폰트의 글자 뒤에 오면 둘을 한 폰트로 그리려다 네모로 깨진다.
    사이에 보이지 않는 글자(U+2060)를 끼워 따로 그리게 한다. */
-// 카오모지가 기기마다 깨지지 않게 다듬는다.
-// 1) 결합 기호(͡ ͜ ̀ ́ 등)와 태국·라오 문자의 얹는 모음(ຶ 등)은 앞 글자와 다른 글꼴로 그려지면 위치가 어긋나므로 지운다.
-// 2) 분수 빗금(⁄)은 옆 글자와 겹쳐 그려지므로 보통 빗금(/)으로 바꾼다.
-// 3) 반각 탁점·반탁점(ﾞﾟ)은 앞 글자에 붙어 버리지 않게 단어 잇기 문자를 넣는다.
+// 반각 탁점·반탁점(ﾞﾟ)이 앞 글자에 붙어 버리지 않게 단어 잇기 문자를 넣는다. 그 밖의 글자는 그대로 둔다.
 function msKao(s) {
-  return String(s == null ? "" : s)
-    .replace(/[\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F\u0E31\u0E34-\u0E3A\u0E47-\u0E4E\u0EB1\u0EB4-\u0EBC\u0EC8-\u0ECD]/g, "")
-    .replace(/[\u2044\u2215]/g, "/")
-    .replace(/[\uFF9E\uFF9F]/g, "\u2060$&");
+  return String(s == null ? "" : s).replace(/[\uFF9E\uFF9F]/g, "\u2060$&");
 }
 
 function msWeather(w) {
@@ -636,7 +633,7 @@ const MS_CSS = `
 .ms-p{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 8px;align-items:center;padding:5px 8px}
 .ms-p + .ms-p{border-left:2px solid #bfe7f2}
 .ms-nm{font-weight:900;font-size:14px;line-height:1.25;min-width:0}
-.ms-kao{display:block;font-size:13px;color:#d9688e;font-weight:500;line-height:1.3;font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo","Noto Sans JP","Noto Sans CJK JP","Noto Sans KR",sans-serif}
+.ms-kao{display:block;font-size:13px;color:#d9688e;font-weight:500;line-height:1.3;font-family:${MS_KAO_FONT}}
 .ms-tags{grid-column:1/-1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .ms-tg{display:flex;align-items:center;gap:5px;font-size:11px;line-height:1.35;color:#5a5048;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ms-tg i{font-style:normal;font-size:9px;font-weight:900;color:#fff;border-radius:3px;padding:0 3px;flex:none}
