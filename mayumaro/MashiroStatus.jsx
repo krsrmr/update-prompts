@@ -138,18 +138,21 @@ function MashiroStatus(props = {}) {
       <span className="ms-dot">{wx}</span><MsMarquee className="ms-wtxt" text={String(weather) + " · " + String(location)} />
     </span>
   );
-  const nbox = (k, v, color) => (
-    <span className="ms-nbox">
+  // vert: 이름표를 숫자 위에 얹은 세로형. 아주 좁은 모바일 펼침 화면에서 날짜 칸을 침범하지 않게 쓴다.
+  const nbox = (k, v, color, vert) => (
+    <span className={"ms-nbox" + (vert ? " ms-nbox-v" : "")}>
       <span className="ms-k">{k}</span>
       <span className="ms-v ms-dot" style={{ color }}>{v}</span>
     </span>
   );
-  const ddays = (
+  const ddaysOf = (vert) => (
     <>
-      {dl !== null ? nbox("마감", dl, C.red) : null}
-      {rs !== null ? nbox("취재", rs, C.blue) : null}
+      {dl !== null ? nbox("마감", dl, C.red, vert) : null}
+      {rs !== null ? nbox("취재", rs, C.blue, vert) : null}
     </>
   );
+  const ddays = ddaysOf(false);
+  const narrow = width < MS_NARROW;
   const stageChipOf = (withText) => (
     <span className="ms-step ms-now" style={{ padding: withText ? "1px 7px" : "1px 5px", fontSize: 12, flex: "none" }} title={status} aria-label={status}>
       <MsPix d={MS_ICON[["script", "camera", "pen", "flag", "flag"][stageIdx]]} w={8} h={9} s={1.5} />
@@ -195,7 +198,7 @@ function MashiroStatus(props = {}) {
   const person = (face, name, kao, st, out) => (
     <div className="ms-p">
       <span className="ms-face">{face}</span>
-      <div className="ms-nm">{name}<span className="ms-kao">{kao}</span></div>
+      <div className="ms-nm">{name}<MsMarquee className="ms-kao" text={String(kao)} /></div>
       <span className="ms-tags">
         <span className="ms-tg"><i style={{ background: "#f07aa0" }}>상태</i><MsMarquee text={st} /></span>
         <span className="ms-tg"><i style={{ background: "#5ca9e0" }}>복장</i><MsMarquee text={out} /></span>
@@ -248,8 +251,10 @@ function MashiroStatus(props = {}) {
   const nextCard = showNext ? (
     <div className="ms-scroll">
       <span className="ms-tab">{rs === "미정" ? "미정" : "예정"}</span>
-      <span className="ms-sk">NEXT 취재</span>
-      <span className="ms-st ms-dot">{String(nextDate || "미정")}</span>
+      <div className="ms-sl">
+        <span className="ms-sk">NEXT 취재</span>
+        <MsMarquee className="ms-st ms-dot" text={String(nextDate || "미정")} />
+      </div>
       <MsMarquee className="ms-sw" text={String(nextPlan || "할 일 미정")} />
     </div>
   ) : null;
@@ -346,7 +351,7 @@ function MashiroStatus(props = {}) {
             {dateChip(true, false)}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, minWidth: 0, marginLeft: 8 }}>
               {weatherChip(false)}
-              <div style={{ display: "flex", gap: 6 }}>{ddays}</div>
+              <div style={{ display: "flex", gap: narrow ? 4 : 6 }}>{narrow ? ddaysOf(true) : ddays}</div>
             </div>
           </div>
           <div className="ms-duo-sp">{duo}</div>
@@ -454,6 +459,8 @@ const MS_SWAY_PX = 7;
 const MS_TAG_UP = 0.3;
 /* 모바일(좁은 화면)에서 배경·마시로·말풍선·이름표를 아래로 내리는 거리(px) */
 const MS_SHIFT_SP = 12;
+/* 이 폭(px)보다 좁은 모바일 펼침 화면에서는 마감·취재 칸을 세로형으로 줄인다 */
+const MS_NARROW = 360;
 /* 관계 단계 이름: 메인 프롬프트 ## 취재와 선의 흐름과 같다 */
 const MS_PHASE = ["", "들킴", "그림 허락", "모델 승낙", "첫 취재", "자각"];
 /* 스프라이트 위치: PSD(1268×1268) 레이어 상자 [x, y, 너비, 높이] (px). 화면에서는 1268px = 317단위로 환산한다 */
@@ -544,6 +551,9 @@ const MS_CSS = `
 .ms-nbox{display:inline-flex;align-items:stretch;white-space:nowrap}
 .ms-nbox .ms-k{${MS_F.dark}padding:0 4px;color:#fff;font-size:11.5px;font-weight:900;display:flex;align-items:center;margin-right:-4px;position:relative;z-index:1}
 .ms-nbox .ms-v{${MS_F.white}padding:0 6px;font-size:18px;line-height:1.1;display:flex;align-items:center}
+.ms-nbox-v{flex-direction:column}
+.ms-nbox-v .ms-k{margin:0 0 -4px;justify-content:center;font-size:10px;line-height:1.3}
+.ms-nbox-v .ms-v{justify-content:center;font-size:16px;padding:0 5px}
 .ms-step{display:inline-flex;align-items:center;justify-content:center;gap:3px;font-size:11px;font-weight:900;white-space:nowrap;line-height:1.5}
 .ms-done{${MS_F.cyan}} .ms-now{${MS_F.orange}} .ms-yet{${MS_F.white}color:#b8ad9c}
 .ms-yet svg{opacity:.35}
@@ -611,7 +621,9 @@ const MS_CSS = `
 .ms-scroll{position:relative;${MS_F.paper}padding:4px 10px 4px 14px;min-width:0}
 .ms-scroll:before{content:"";position:absolute;left:2px;top:0;bottom:0;width:4px;background:#e2cf9f;border-right:1px solid #c9b07a}
 .ms-sk{display:inline-block;${MS_F.red}padding:0 4px;color:#fff;font-size:11px;font-weight:900;vertical-align:middle}
-.ms-st{font-size:14px;vertical-align:middle;margin-left:4px}
+.ms-sl{display:flex;align-items:center;gap:4px;padding-right:46px;min-width:0}
+.ms-sl .ms-sk{flex:none}
+.ms-st{font-size:14px}
 .ms-sw{font-size:12.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ms-tab{position:absolute;right:10px;top:-14px;${MS_F.yellow}padding:0 6px;font-size:11px;font-weight:900}
 .ms-work{${MS_F.white}padding:3px 8px 5px;min-width:0}
