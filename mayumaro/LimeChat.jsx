@@ -27,14 +27,15 @@ function LimeChat(props = {}) {
   const [hideKo, setHideKo] = useState(false);
   const c = LC_COLORS;
 
+  // 칸 뒤쪽 값은 순서가 틀려도 받는다: 시각처럼 생긴 값(23:41)은 시간, 나머지는 번역·스티커 이름으로 쓴다.
   const rows = (Array.isArray(log) ? log : []).filter(Boolean).map((line) => {
     const p = String(line).split("|");
     const kind = (p[0] || "").trim();
-    // "u|메시지|시간"(번역 없는 옛 형식)도 받는다
-    if (kind === "u") return p.length >= 4 ? { kind, text: p[1] || "", ja: p[2] || "", time: p[3] || "" } : { kind, text: p[1] || "", ja: "", time: p[2] || "" };
-    if (kind === "m") return { kind, ja: p[1] || "", ko: p[2] || "", time: p[3] || "" };
-    if (kind === "st") return { kind, emoji: p[1] || "🐰", label: p[2] || "", time: p[3] || "" };
-    if (kind === "del") return { kind, time: p[1] || "" };
+    const rest = lcSplit(p.slice(2));
+    if (kind === "u") return { kind, text: p[1] || "", ja: rest.other, time: rest.time };
+    if (kind === "m") return { kind, ja: p[1] || "", ko: rest.other, time: rest.time };
+    if (kind === "st") return { kind, emoji: p[1] || "🐰", label: rest.other, time: rest.time };
+    if (kind === "del") return { kind, time: lcSplit(p.slice(1)).time };
     if (kind === "day") return { kind, text: p[1] || "" };
     return { kind: "m", ja: p.join(" "), ko: "", time: "" };
   });
@@ -83,12 +84,12 @@ function LimeChat(props = {}) {
             if (r.kind === "u") {
               return (
                 <div key={i} className="lc-in" style={Object.assign({ display: "flex", justifyContent: "flex-end", alignItems: "flex-end", gap: 5 }, delay)}>
-                  <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: 10, color: c.meta, lineHeight: 1.3, flex: "none" }}>
+                  <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", fontSize: 10, color: c.meta, lineHeight: 1.3, flex: "none", maxWidth: 44, whiteSpace: "nowrap", overflow: "hidden" }}>
                     {i < lastMa ? <span>既読</span> : null}
                     <span>{r.time}</span>
                   </span>
-                  <div className="lc-b lc-me" style={{ background: c.me, color: c.ink }}>
-                    <span lang="ko">{r.text}</span>
+                  <div className="lc-b lc-me" style={{ background: c.me, color: c.ink, maxWidth: "80%", minWidth: 0 }}>
+                    <span lang="ko" style={{ wordBreak: "keep-all", overflowWrap: "anywhere" }}>{r.text}</span>
                     {r.ja && !hideKo ? (
                       <span lang="ja" style={{ display: "block", marginTop: 4, paddingTop: 4, borderTop: "1px dashed " + c.meLine, fontSize: 12.5, color: c.meSub }}>{r.ja}</span>
                     ) : null}
@@ -114,11 +115,11 @@ function LimeChat(props = {}) {
                       <div className="lc-b lc-ma" style={{ background: "#fff", color: c.ink }}>
                         <span lang="ja">{r.ja}</span>
                         {r.ko && !hideKo ? (
-                          <span lang="ko" style={{ display: "block", marginTop: 4, paddingTop: 4, borderTop: "1px dashed " + c.line, fontSize: 12.5, color: c.sub }}>{r.ko}</span>
+                          <span lang="ko" style={{ display: "block", marginTop: 4, paddingTop: 4, borderTop: "1px dashed " + c.line, fontSize: 12.5, color: c.sub, wordBreak: "keep-all", overflowWrap: "anywhere" }}>{r.ko}</span>
                         ) : null}
                       </div>
                     )}
-                    <span style={{ fontSize: 10, color: c.meta, flex: "none" }}>{r.time}</span>
+                    <span style={{ fontSize: 10, color: c.meta, flex: "none", maxWidth: 44, whiteSpace: "nowrap", overflow: "hidden" }}>{r.time}</span>
                   </div>
                 </div>
               </div>
@@ -191,4 +192,13 @@ function LcAvatar() {
       <path d="M15.8 23c.8.6 1.6.6 2.4 0" stroke="#4a4550" strokeWidth="1" fill="none" strokeLinecap="round" />
     </svg>
   );
+}
+
+/* 시각("23:41")과 그 밖의 값(번역 등)을 가른다 */
+function lcSplit(fields) {
+  const isTime = (v) => /^\s*\d{1,2}[:：]\d{2}\s*$/.test(String(v || ""));
+  const list = (fields || []).map((v) => String(v || "").trim()).filter(Boolean);
+  const time = list.find(isTime) || "";
+  const other = list.find((v) => !isTime(v)) || "";
+  return { time, other };
 }
