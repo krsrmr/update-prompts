@@ -332,7 +332,7 @@ function MashiroStatus(props = {}) {
         </div>
       ) : null}
       <div className="ms-ntag" style={{ left: cx - 70, top: botY - spBox.height * MS_TAG_UP, width: 140 }}>
-        <span>{away ? "취재 외출중" : status + " " + mashiroFace}</span>
+        <span>{away ? "취재 외출중" : status + " " + msKao(mashiroFace)}</span>
       </div>
 
       {/* 위 정보 */}
@@ -407,7 +407,7 @@ function MashiroStatus(props = {}) {
                 )) : <li>오늘은 할 일이 없어요.</li>}
               </ul>
             ) : null}
-            {popup === "memo" ? <div className="ms-memo">{String(memo || "…")}</div> : null}
+            {popup === "memo" ? <div className="ms-memo">{msKao(memo || "…")}</div> : null}
             {popup === "secret" ? (
               <>
                 <div className="ms-rows" style={{ margin: 8 }}>
@@ -453,6 +453,19 @@ function MashiroStatus(props = {}) {
 const MS_INK = "#2b2420";
 const MS_C = { ink: MS_INK, red: "#e0442e", blue: "#2f80a8" };
 const MS_IMG = "https://mayumaro.vercel.app/img/status/";
+/* 카오모지용 예비 폰트: 카오모지는 여러 나라 문자에서 글자를 빌려 써서, 폰에 그 폰트가 없으면 네모로 깨진다.
+   아래 폰트는 폰에 없는 글자만 빌려 쓰고, 그 글자가 화면에 나올 때만 내려받는다. */
+const MS_FALLBACK = [
+  "Noto Sans JP:wght@400;700", "Noto Sans", "Noto Sans Symbols 2", "Noto Sans Symbols",
+  "Noto Sans Canadian Aboriginal", "Noto Sans Arabic", "Noto Sans Syriac", "Noto Sans Thai", "Noto Sans Lao",
+  "Noto Sans Kannada", "Noto Sans Telugu", "Noto Sans Oriya", "Noto Sans Gujarati", "Noto Sans Malayalam",
+  "Noto Sans Yi", "Noto Sans Math"
+];
+const MS_FONT_URL = "https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+KR:wght@400;700;900" +
+  MS_FALLBACK.map((f) => "&family=" + f.replace(/ /g, "+")).join("") + "&display=swap";
+const MS_FONT = ['"Noto Sans KR"']
+  .concat(MS_FALLBACK.map((f) => '"' + f.split(":")[0] + '"'), ['"Noto Sans CJK KR"', '"Apple SD Gothic Neo"', '"Malgun Gothic"', "sans-serif"])
+  .join(",");
 /* 움직임 크기: 작화 통통 높이(px), 고민 흔들림 폭(px, 머리끝이 좌우로 움직이는 거리), 이름표를 스프라이트 위로 겹치는 비율 */
 const MS_HOP_PX = 5;
 const MS_SWAY_PX = 7;
@@ -499,6 +512,12 @@ function msDate(d, w) {
   return { m: m ? m[1] : "", d: m ? m[2] : "", w: map[ws] || ws };
 }
 
+/* 반각 탁점·반탁점(ﾞ ﾟ)은 앞 글자에 달라붙는 글자다. ✧ﾟ처럼 다른 폰트의 글자 뒤에 오면 둘을 한 폰트로 그리려다 네모로 깨진다.
+   사이에 보이지 않는 글자(U+2060)를 끼워 따로 그리게 한다. */
+function msKao(s) {
+  return String(s == null ? "" : s).replace(/[\uFF9E\uFF9F]/g, "\u2060$&");
+}
+
 function msWeather(w) {
   const s = String(w || "");
   if (s.includes("눈")) return "❄";
@@ -536,8 +555,8 @@ const MS_RAIN = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http:
 const MS_SNOW = `url("data:image/svg+xml,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect x='7' y='5' width='3' height='3' fill='#ffffff'/><rect x='27' y='25' width='2' height='2' fill='#ffffff'/></svg>")}")`;
 
 const MS_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=DotGothic16&family=Noto+Sans+KR:wght@400;700;900&display=swap');
-.ms-root{font-family:"Noto Sans KR","Noto Sans CJK KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;color:${MS_INK};line-height:1.45;box-sizing:border-box}
+@import url('${MS_FONT_URL}');
+.ms-root{font-family:${MS_FONT};color:${MS_INK};line-height:1.45;box-sizing:border-box}
 .ms-root *{box-sizing:border-box}
 .ms-root button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
 .ms-dot{font-family:"DotGothic16","Noto Sans JP",monospace}
@@ -791,8 +810,8 @@ function MsMarquee(p) {
   return (
     <span ref={boxRef} className={"ms-mq" + (run ? " on" : "") + (p.className ? " " + p.className : "")}>
       <span ref={txtRef} className="ms-mq-in" style={run ? { "--mqx": -dist + "px", "--mqt": Math.max(4, dist / MS_MQ_SPEED / 0.78).toFixed(1) + "s" } : null}>
-        {p.text}
-        {run ? <span className="ms-mq-cp" style={{ marginLeft: MS_MQ_GAP }} aria-hidden="true">{p.text}</span> : null}
+        {msKao(p.text)}
+        {run ? <span className="ms-mq-cp" style={{ marginLeft: MS_MQ_GAP }} aria-hidden="true">{msKao(p.text)}</span> : null}
       </span>
     </span>
   );
