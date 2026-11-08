@@ -1,13 +1,14 @@
 // 필요 훅: useState (react)
 // LIME(라인 패러디 메신저) 대화창. {{user}}와 마시로가 문자를 주고받는 [메신저] 모드에서 매 응답에 한 번 쓴다.
 // log 한 줄 = 한 칸. 이번 응답에서 오간 것만 넣는다(지난 응답의 메시지는 다시 넣지 않는다).
-//   "u|메시지|시간"            {{user}}가 보낸 메시지 (오른쪽 연두색)
+//   "u|메시지|日本語|시간"      {{user}}가 보낸 메시지 (오른쪽 연두색, 입력한 말 아래 일본어 번역)
 //   "m|日本語|한국어|시간"      마시로의 메시지 (왼쪽 흰색, 일본어 아래 한국어)
 //   "st|이모지|스티커 이름|시간" 마시로의 스티커 (큰 이모지)
 //   "del|시간"                 마시로가 보냈다가 취소한 메시지
 //   "day|11/9(月)"             날짜 구분선
 // {{user}}의 메시지 뒤에 마시로 칸이 하나라도 있으면 그 메시지에 '既読'(읽음)가 붙는다.
 // typing={true}: 맨 아래에 마시로가 입력 중인 점 세 개를 띄운다.
+// 상단 '번역' 단추는 양쪽 번역(마시로 쪽 한국어, {{user}} 쪽 일본어)을 함께 숨기고 보인다.
 
 function LimeChat(props = {}) {
   const {
@@ -15,7 +16,7 @@ function LimeChat(props = {}) {
     clock = "23:41",
     log = [
       "day|11/9(月)",
-      "u|아직 안 자요?|23:38",
+      "u|아직 안 자요?|まだ起きてますか？|23:38",
       "m|起きてます……！ 原稿中で……|깨어 있어요……! 원고 중이라서……|23:40",
       "del|23:40",
       "st|🐻💦|꾸벅 곰|23:41"
@@ -29,7 +30,8 @@ function LimeChat(props = {}) {
   const rows = (Array.isArray(log) ? log : []).filter(Boolean).map((line) => {
     const p = String(line).split("|");
     const kind = (p[0] || "").trim();
-    if (kind === "u") return { kind, text: p[1] || "", time: p[2] || "" };
+    // "u|메시지|시간"(번역 없는 옛 형식)도 받는다
+    if (kind === "u") return p.length >= 4 ? { kind, text: p[1] || "", ja: p[2] || "", time: p[3] || "" } : { kind, text: p[1] || "", ja: "", time: p[2] || "" };
     if (kind === "m") return { kind, ja: p[1] || "", ko: p[2] || "", time: p[3] || "" };
     if (kind === "st") return { kind, emoji: p[1] || "🐰", label: p[2] || "", time: p[3] || "" };
     if (kind === "del") return { kind, time: p[1] || "" };
@@ -85,7 +87,12 @@ function LimeChat(props = {}) {
                     {i < lastMa ? <span>既読</span> : null}
                     <span>{r.time}</span>
                   </span>
-                  <div className="lc-b lc-me" style={{ background: c.me, color: c.ink }}>{r.text}</div>
+                  <div className="lc-b lc-me" style={{ background: c.me, color: c.ink }}>
+                    <span lang="ko">{r.text}</span>
+                    {r.ja && !hideKo ? (
+                      <span lang="ja" style={{ display: "block", marginTop: 4, paddingTop: 4, borderTop: "1px dashed " + c.meLine, fontSize: 12.5, color: c.meSub }}>{r.ja}</span>
+                    ) : null}
+                  </div>
                 </div>
               );
             }
@@ -149,6 +156,8 @@ const LC_COLORS = {
   bg: "#b9cbe0",
   frame: "#9fb4cc",
   me: "#c6f08a",
+  meLine: "#9fcf5c",
+  meSub: "#46612a",
   ink: "#1f2328",
   sub: "#5b6470",
   meta: "#4d5a6a",
