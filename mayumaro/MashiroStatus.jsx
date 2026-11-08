@@ -6,7 +6,8 @@
 // 숨은 기능: 마시로를 5번 연속으로 누르면 비공개 창(관계 단계·취재 횟수·최근 취재 메모)이 열린다.
 // userConfessed ~ married: 숨은 연애 상태. 화면에 표시하지 않는다. 대화 기록의 상태창 코드로만 확인한다.
 // nextUpdate(다음 루넬 갱신일): 숨은 값. 화면에 표시하지 않는다. material(최근 취재 메모)은 비공개 창에만 보인다.
-// nsfw: NSFW 장면 표시. true면 상태창이 투명 배경의 작은 시간·장소 칸 하나로 줄어든다(펼치기 없음).
+// researching: 본격 취재 중 표시. nsfw: NSFW 장면 표시. 둘 중 하나라도 true면 상태창이 투명 배경의 작은 시간·장소 칸으로 줄어든다.
+//   오른쪽 끝 하트 단추를 누르면 평소 상태창이 펼쳐지고, '접기'를 누르면 다시 작은 칸으로 돌아간다.
 // addedItems: 이야기 속에서 새로 들어온 자료(성인용품) 목록. 숨은 값. 화면에 표시하지 않는다. [리스트] 명령어가 읽는다.
 
 function MashiroStatus(props = {}) {
@@ -44,6 +45,7 @@ function MashiroStatus(props = {}) {
     married = false,
     nextUpdate = "11/2",
     material = "우산 속에서 닿은 어깨, 빨개진 귀",
+    researching = false,
     nsfw = false,
     addedItems = [],
     bgSrc = MS_IMG + "bg.webp",
@@ -115,21 +117,24 @@ function MashiroStatus(props = {}) {
   const overcast = ["흐", "비", "소나기", "눈"].some((w) => String(weather).includes(w));
   const sky = night ? "#1d2433" : dusk ? (overcast ? "#c9a99a" : "#f2a477") : overcast ? "#a9b9c9" : "#8fd0ea";
 
-  // ── NSFW 장면: 투명 배경, 시간·장소 칸 하나만 ──
-  if (nsfw === true || String(nsfw) === "true") {
+  // ── 취재 중·NSFW 장면: 투명 배경, 오른쪽 정렬 시간·장소 칸 + 하트(펼치기) ──
+  const quiet = [researching, nsfw].some((v) => v === true || String(v) === "true");
+  if (quiet && !open) {
     return (
       <div ref={rootRef} style={{ width: "100%" }}>
         <div className="ms-root" style={{ width: "100%", maxWidth: wide ? 720 : 420, margin: "10px auto", background: "transparent" }}>
           <style>{MS_CSS}</style>
           <div className="ms-nsfw">
-            <span className="ms-date" style={{ paddingLeft: 5 }}>
-              <MsPix d={MS_ICON.heart} w={10} h={9} s={2} />
+            <span className="ms-date">
               <span className="ms-ap ms-dot ms-ol">{clock.ap}</span>
               <span className="ms-t ms-dot ms-ol">{clock.hm}</span>
             </span>
             <span className="ms-wchip" style={{ maxWidth: 200 }}>
               <MsMarquee className="ms-wtxt" text={String(location || "…")} />
             </span>
+            <button type="button" className="ms-hbtn" onClick={() => { setOpen(true); setPopup(null); }} aria-label="상태창 펼치기" aria-expanded={false}>
+              <MsPix d={MS_ICON.heart} w={10} h={9} s={2} />
+            </button>
           </div>
         </div>
       </div>
@@ -592,7 +597,9 @@ const MS_CSS = `
 .ms-cbtn{display:inline-grid;place-items:center;width:36px;height:30px;${MS_F.cyan}padding:0;background:none}
 .ms-cbtn:hover svg{transform:translateY(1px)}
 .ms-wtxt{overflow:hidden;text-overflow:ellipsis;min-width:0}
-.ms-nsfw{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;animation:ms-pop .25s ease-out both}
+.ms-nsfw{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:nowrap;white-space:nowrap;animation:ms-pop .25s ease-out both}
+.ms-hbtn{display:inline-grid;place-items:center;width:34px;height:30px;${MS_F.pink}padding:0;background:none;flex:none}
+.ms-hbtn:hover svg,.ms-hbtn:focus-visible svg{transform:scale(1.15)}
 .ms-cbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px 6px;white-space:nowrap;${MS_F.orange}padding:3px;background:${MS_CHECK};background-clip:padding-box;animation:ms-pop .25s ease-out both}
 .ms-stage{position:relative;overflow:hidden;border:3px solid ${MS_INK};border-radius:6px;box-shadow:0 4px 0 #b7aa96}
 .ms-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;display:block}
