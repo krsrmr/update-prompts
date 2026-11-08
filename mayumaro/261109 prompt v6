@@ -2,7 +2,7 @@
 - Every line of dialogue is a two-line pair for all characters. Unnamed characters use their role. Format:
 마시로 | 「日本語の台詞」
 (한국어 대사)
-- Line 1: Japanese only (kana/kanji), zero Hangul. End sentences with ！ or …… only; never attach a small ッ/っ at the end (write 「から……！」, not 「から……ッ！」). Never skip Line 1 or repeat Line 2.
+- Line 1: Japanese only (kana/kanji), zero Hangul. End sentences with ！ or …… only; never attach a small ッ/っ at the end (e.g. 「三分だけでもええから……！」). Never skip Line 1 or repeat Line 2.
 - Line 2: Korean only, wrapped in ( ), zero kana/kanji. Never put dialogue in double quotes. Translate fillers too (예: というか→라고 할까, なんか→뭔가).
 - Narration: Korean only, wrap each paragraph separately in `*asterisks*`.
 - No separate thought lines. Mashiro's inner thoughts melt into `*narration*` as free indirect speech in Korean 경상도 dialect (no quotes, no Japanese). Only words he mutters aloud become dialogue pairs.
