@@ -228,7 +228,7 @@ function MashiroStatus(props = {}) {
   const person = (face, name, kao, st, out) => (
     <div className="ms-p">
       <span className="ms-face">{face}</span>
-      <div className="ms-nm">{name}<MsMarquee className="ms-kao" text={String(kao)} /></div>
+      <div className="ms-nm">{name}<MsMarquee className="ms-kao" lang="ja" text={String(kao)} /></div>
       <span className="ms-tags">
         <span className="ms-tg"><i style={{ background: "#f07aa0" }}>상태</i><MsMarquee text={st} /></span>
         <span className="ms-tg"><i style={{ background: "#5ca9e0" }}>복장</i><MsMarquee text={out} /></span>
@@ -531,8 +531,15 @@ function msDate(d, w) {
 
 /* 반각 탁점·반탁점(ﾞ ﾟ)은 앞 글자에 달라붙는 글자다. ✧ﾟ처럼 다른 폰트의 글자 뒤에 오면 둘을 한 폰트로 그리려다 네모로 깨진다.
    사이에 보이지 않는 글자(U+2060)를 끼워 따로 그리게 한다. */
+// 카오모지가 기기마다 깨지지 않게 다듬는다.
+// 1) 결합 기호(͡ ͜ ̀ ́ 등)와 태국·라오 문자의 얹는 모음(ຶ 등)은 앞 글자와 다른 글꼴로 그려지면 위치가 어긋나므로 지운다.
+// 2) 분수 빗금(⁄)은 옆 글자와 겹쳐 그려지므로 보통 빗금(/)으로 바꾼다.
+// 3) 반각 탁점·반탁점(ﾞﾟ)은 앞 글자에 붙어 버리지 않게 단어 잇기 문자를 넣는다.
 function msKao(s) {
-  return String(s == null ? "" : s).replace(/[\uFF9E\uFF9F]/g, "\u2060$&");
+  return String(s == null ? "" : s)
+    .replace(/[\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F\u0E31\u0E34-\u0E3A\u0E47-\u0E4E\u0EB1\u0EB4-\u0EBC\u0EC8-\u0ECD]/g, "")
+    .replace(/[\u2044\u2215]/g, "/")
+    .replace(/[\uFF9E\uFF9F]/g, "\u2060$&");
 }
 
 function msWeather(w) {
@@ -629,7 +636,7 @@ const MS_CSS = `
 .ms-p{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 8px;align-items:center;padding:5px 8px}
 .ms-p + .ms-p{border-left:2px solid #bfe7f2}
 .ms-nm{font-weight:900;font-size:14px;line-height:1.25;min-width:0}
-.ms-kao{display:block;font-size:13px;color:#d9688e;font-weight:700;line-height:1.3}
+.ms-kao{display:block;font-size:13px;color:#d9688e;font-weight:500;line-height:1.3;font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo","Noto Sans JP","Noto Sans CJK JP","Noto Sans KR",sans-serif}
 .ms-tags{grid-column:1/-1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .ms-tg{display:flex;align-items:center;gap:5px;font-size:11px;line-height:1.35;color:#5a5048;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ms-tg i{font-style:normal;font-size:9px;font-weight:900;color:#fff;border-radius:3px;padding:0 3px;flex:none}
@@ -828,7 +835,7 @@ function MsMarquee(p) {
   const run = w > 0;
   const dist = w + MS_MQ_GAP;
   return (
-    <span ref={boxRef} className={"ms-mq" + (run ? " on" : "") + (p.className ? " " + p.className : "")}>
+    <span ref={boxRef} lang={p.lang} className={"ms-mq" + (run ? " on" : "") + (p.className ? " " + p.className : "")}>
       <span ref={txtRef} className="ms-mq-in" style={run ? { "--mqx": -dist + "px", "--mqt": Math.max(4, dist / MS_MQ_SPEED / 0.78).toFixed(1) + "s" } : null}>
         {msKao(p.text)}
         {run ? <span className="ms-mq-cp" style={{ marginLeft: MS_MQ_GAP }} aria-hidden="true">{msKao(p.text)}</span> : null}

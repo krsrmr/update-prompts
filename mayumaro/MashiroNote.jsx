@@ -118,7 +118,7 @@ function MashiroNote(props = {}) {
 
           {/* 낙서 */}
           {doodle ? (
-            <div style={{ textAlign: "right", fontSize: 17, color: c.pencil, marginTop: 4, paddingRight: 90, transform: "rotate(-4deg)" }}>{String(doodle)}</div>
+            <div lang="ja" style={{ textAlign: "right", fontSize: 17, color: c.pencil, marginTop: 4, paddingRight: 90, transform: "rotate(-4deg)" }}>{mnKao(doodle)}</div>
           ) : null}
         </div>
       </div>
@@ -159,3 +159,10 @@ const MN_CSS = `
 .mn-sticky.mn-peeled { transform: rotate(-8deg) translate(-40px, -6px) rotateX(55deg); opacity: .35; }
 @media (prefers-reduced-motion: reduce) { .mn-book, .mn-line, .mn-peek { animation: none; } .mn-sticky { transition: none; } }
 `;
+
+/* 카오모지가 기기마다 깨지지 않게: 결합 기호·얹는 모음은 지우고, 분수 빗금은 보통 빗금으로 */
+function mnKao(s) {
+  return String(s == null ? "" : s)
+    .replace(/[\u0300-\u036F\u1AB0-\u1AFF\u1DC0-\u1DFF\u20D0-\u20FF\uFE20-\uFE2F\u0E31\u0E34-\u0E3A\u0E47-\u0E4E\u0EB1\u0EB4-\u0EBC\u0EC8-\u0ECD]/g, "")
+    .replace(/[\u2044\u2215]/g, "/");
+}
