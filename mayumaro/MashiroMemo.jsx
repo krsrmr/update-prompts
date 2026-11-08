@@ -1,5 +1,5 @@
 // 마시로 기록 태그 (상태창 없이 시작하는 시작 상황 전용)
-// 화면에는 아무것도 그리지 않는다. AI가 다음 응답으로 넘기는 기억(날짜·회차·마감·취재 일정·관계 단계·연애 기록)을 담는 태그다.
+// 화면에는 아무것도 그리지 않는다. AI가 다음 응답으로 넘기는 기억(날짜·회차·마감·취재 일정·관계 단계·연애 기록·NSFW 장면 여부·새 자료)을 담는 태그다.
 // 값은 대화 기록의 태그 코드로만 확인한다.
 
 function MashiroMemo(props = {}) {
@@ -16,6 +16,8 @@ function MashiroMemo(props = {}) {
     researchCount = 0,
     nextUpdate = "11/2",
     material = "",
+    nsfw = false,
+    addedItems = [],
     userConfessed = false,
     mashiroConfessed = false,
     rejected = false,
