@@ -1,8 +1,10 @@
 // 필요 훅: useState, useRef, useEffect (react)
-// 오손 상태창 v0.3 (가제작) — 바이닐 플레이어
+// 오손 상태창 v0.4 (가제작) — 바이닐 플레이어 · 긴 글자 흘러가기 · 넓은 창 버전 (mood 추가 · 훅 직접 연결 · 메뉴 3개 · 570px 대응)
 
 function Orsonstatus(props = {}) {
   const p = props || {};
+  const H = osHooks();
+  const mkRef = H.r || ((v) => H.s(() => ({ current: v }))[0]);
 
   const date = osVal(p.date, "");
   const time = osVal(p.time, "");
@@ -18,6 +20,7 @@ function Orsonstatus(props = {}) {
   const rent = osRent(osVal(p.rent, ""));
   const propane = osPropane(p.propane);
   const goal = osVal(p.goal, "");
+  const mood = osVal(p.mood, "");
   const stage = Math.max(1, Math.min(4, Math.round(Number(p.stage) || 1)));
   const known = osList(p.known).map(osSplitName);
   const threads = osList(p.threads).map(osSplitName);
@@ -26,19 +29,42 @@ function Orsonstatus(props = {}) {
   const silent = osSilent(song, source);
   const dur = 150 + (osHue(song + artist) % 151);
 
-  const [open, setOpen] = useState(false);
-  const [more, setMore] = useState(false);
-  const [bodyH, setBodyH] = useState(0);
-  const [sec, setSec] = useState(() => osHue(artist + song) % 120);
-  const bodyRef = useRef(null);
+  const [open, setOpen] = H.s(false);
+  const [more, setMore] = H.s(false);
+  const [bodyH, setBodyH] = H.s(0);
+  const [sec, setSec] = H.s(() => osHue(artist + song) % 120);
+  const [rootW, setRootW] = H.s(0);
+  const [tab, setTab] = H.s("all");
+  const bodyRef = mkRef(null);
+  const rootRef = mkRef(null);
+  const scrollRef = mkRef(null);
+  const wide = rootW >= OS_WIDE.min;
 
-  useEffect(() => {
+  H.e(() => {
+    const el = rootRef.current;
+    if (!el) return undefined;
+    const check = () => {
+      const w = el.clientWidth;
+      setRootW((v) => (v === w ? v : w));
+    };
+    check();
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  H.e(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+  }, [tab]);
+
+  H.e(() => {
     if (silent) return undefined;
     const id = setInterval(() => setSec((s) => (s + 1) % dur), 1000);
     return () => clearInterval(id);
   }, [silent, dur]);
 
-  useEffect(() => {
+  H.e(() => {
     const update = () => {
       if (bodyRef.current) setBodyH(bodyRef.current.scrollHeight);
     };
@@ -49,11 +75,12 @@ function Orsonstatus(props = {}) {
       return () => ro.disconnect();
     }
     return undefined;
-  }, [open, more, known.length, threads.length, pending.length]);
+  }, [open, more, wide, known.length, threads.length, pending.length]);
 
   const tod = osTod(time);
   const T = OS_THEME[tod];
-  const wx = osWx(weather, tod);
+  const wxKey = osWxKey(weather, tod);
+  const wx = OS_WX[wxKey];
   const bodyItems = body ? body.split(/[,，·\/]/).map((s) => s.trim()).filter(Boolean) : [];
   const songTitle = silent ? "조용함" : song;
   const pct = silent ? 0 : (sec / dur) * 100;
@@ -229,7 +256,7 @@ function Orsonstatus(props = {}) {
       {icon(<path d="M6 9l6 6 6-6" />, 24, "#fff")}
       <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
         <div style={{ fontSize: 10, letterSpacing: 1.4, fontWeight: 700, color: "rgba(255,255,255,.75)" }}>PLAYING FROM</div>
-        <div style={{ fontSize: 12.5, fontWeight: 800, marginTop: 1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{place || "B-Side Vinyl & Frets"}</div>
+        <OsMarquee style={{ fontSize: 12.5, fontWeight: 800, marginTop: 1 }}>{place || "B-Side Vinyl & Frets"}</OsMarquee>
       </div>
       {icon(
         <g fill="#fff" stroke="none">
@@ -245,17 +272,25 @@ function Orsonstatus(props = {}) {
     <div onClick={() => setOpen(true)} style={{ position: "relative", display: "flex", alignItems: "center", gap: 10, padding: "8px 12px 10px 8px", cursor: "pointer", background: T.mini, borderRadius: 8, overflow: "hidden" }}>
       {plinth(42, false)}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 13.5, fontWeight: 700, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        <OsMarquee style={{ fontSize: 13.5, fontWeight: 700 }}>
           {songTitle}
           {artist && !silent ? <span style={{ fontWeight: 500, color: "rgba(255,255,255,.7)" }}>{" · " + artist}</span> : null}
-        </div>
-        <div style={{ fontSize: 12, color: "rgba(255,255,255,.7)", marginTop: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{[date, time].filter(Boolean).join(" · ")}</div>
+        </OsMarquee>
+        <OsMarquee style={{ fontSize: 12, color: "rgba(255,255,255,.7)", marginTop: 2 }}>{[date, time].filter(Boolean).join(" · ")}</OsMarquee>
       </div>
       {eq(14, T.accent)}
       {icon(silent ? <path d="M7 4l13 8-13 8z" fill="#fff" stroke="none" /> : <g fill="#fff" stroke="none"><rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" /></g>, 24, "#fff")}
       <div style={{ position: "absolute", left: 8, right: 8, bottom: 0, height: 2, borderRadius: 1, background: "rgba(255,255,255,.2)", overflow: "hidden" }}>
         <div style={{ height: "100%", width: pct + "%", background: "#fff", transition: "width 1s linear" }} />
       </div>
+    </div>
+  );
+
+  const tag = (t, i) => (
+    <div key={i} style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px 8px 24px", background: "#efe6d2", color: "#3b3326", fontSize: 13, clipPath: "polygon(13px 0, 100% 0, 100% 100%, 13px 100%, 0 50%)", wordBreak: "keep-all" }}>
+      <span style={{ position: "absolute", left: 10, top: "50%", width: 6, height: 6, marginTop: -3, borderRadius: "50%", background: "#2a2a2a" }} />
+      <span style={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{t.what}</span>
+      {t.due ? <span style={{ flexShrink: 0, fontSize: 11.5, fontWeight: 800, color: "#b23a2e" }}>{t.due}</span> : null}
     </div>
   );
 
@@ -275,8 +310,8 @@ function Orsonstatus(props = {}) {
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{songTitle}</div>
-            <div style={{ fontSize: 14, color: sub, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{silent ? "아무것도 흐르지 않는다" : artist}</div>
+            <OsMarquee style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.3 }}>{songTitle}</OsMarquee>
+            <OsMarquee style={{ fontSize: 14, color: sub, marginTop: 3 }}>{silent ? "아무것도 흐르지 않는다" : artist}</OsMarquee>
           </div>
           {icon(<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z" />, 24, "#fff")}
         </div>
@@ -345,7 +380,7 @@ function Orsonstatus(props = {}) {
             16,
             T.accent
           )}
-          <span style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: T.accent, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{source || "어디선가"}</span>
+          <OsMarquee style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: T.accent }}>{source || "어디선가"}</OsMarquee>
           {icon(
             <g>
               <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -429,7 +464,7 @@ function Orsonstatus(props = {}) {
         <div onClick={() => setMore(!more)} className="os-rise" style={{ flex: "1 1 100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", borderRadius: 10, background: "rgba(255,255,255,.07)", cursor: "pointer", animationDelay: ".3s" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 800, wordBreak: "keep-all" }}>관계 · 크레딧 · 동네 사정 · 작업대 위</div>
-            <div style={{ fontSize: 12, color: sub, marginTop: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{OS_STAGE[stage - 1].kr + " · 크레딧 " + known.length + " · 동네 " + threads.length + " · 작업대 " + pending.length}</div>
+            <OsMarquee style={{ fontSize: 12, color: sub, marginTop: 3 }}>{OS_STAGE[stage - 1].kr + " · 크레딧 " + known.length + " · 동네 " + threads.length + " · 작업대 " + pending.length}</OsMarquee>
           </div>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 4, flexShrink: 0, padding: "6px 10px 6px 12px", borderRadius: 16, background: "rgba(255,255,255,.12)", fontSize: 12, fontWeight: 700 }}>
             {more ? "접기" : "더보기"}
@@ -504,15 +539,7 @@ function Orsonstatus(props = {}) {
             "작업대 위",
             "ON THE BENCH",
             pending.length ? (
-              <div style={{ display: "grid", gap: 8 }}>
-                {pending.map((t, i) => (
-                  <div key={i} style={{ position: "relative", display: "flex", alignItems: "center", gap: 8, padding: "8px 12px 8px 24px", background: "#efe6d2", color: "#3b3326", fontSize: 13, clipPath: "polygon(13px 0, 100% 0, 100% 100%, 13px 100%, 0 50%)", wordBreak: "keep-all" }}>
-                    <span style={{ position: "absolute", left: 10, top: "50%", width: 6, height: 6, marginTop: -3, borderRadius: "50%", background: "#2a2a2a" }} />
-                    <span style={{ flex: 1, minWidth: 0, fontWeight: 600 }}>{t.what}</span>
-                    {t.due ? <span style={{ flexShrink: 0, fontSize: 11.5, fontWeight: 800, color: "#b23a2e" }}>{t.due}</span> : null}
-                  </div>
-                ))}
-              </div>
+              <div style={{ display: "grid", gap: 8 }}>{pending.map(tag)}</div>
             ) : (
               <div style={{ fontSize: 13, color: sub }}>작업대가 비었다. 드문 일이다.</div>
             ),
@@ -525,15 +552,414 @@ function Orsonstatus(props = {}) {
     </div>
   );
 
-  return (
-    <div style={{ fontFamily: font, color: "#fff", maxWidth: 480, margin: "6px auto", boxSizing: "border-box", WebkitFontSmoothing: "antialiased" }}>
-      <style>{OS_CSS}</style>
+  const narrowView = (
+    <div style={{ maxWidth: 480, margin: "6px auto" }}>
       <div style={{ borderRadius: open ? 14 : 8, overflow: "hidden", background: open ? "linear-gradient(180deg, " + T.top + " 0px, " + T.top2 + " 300px, #121212 620px)" : "transparent", boxShadow: open ? "0 12px 30px rgba(0,0,0,.35)" : "0 4px 12px rgba(0,0,0,.25)" }}>
         {header}
         <div style={{ maxHeight: open ? bodyH : 0, opacity: open ? 1 : 0, overflow: "hidden", transition: "max-height .6s cubic-bezier(.2,.8,.2,1), opacity .35s ease" }}>
           <div ref={bodyRef}>{content}</div>
         </div>
       </div>
+    </div>
+  );
+
+  // ───── 넓은 창 (스포티파이 PC풍) ─────
+  const pic = (src, extra) =>
+    src ? <div style={{ position: "absolute", inset: 0, backgroundImage: 'url("' + String(src).replace(/"/g, "%22") + '")', backgroundSize: "cover", backgroundPosition: "center", ...(extra || {}) }} /> : null;
+
+  const show = (id) => tab === "all" || tab === id;
+  const ink = "rgba(0,0,0,.6)";
+  const plinthBg = "linear-gradient(150deg, " + T.plinth + " 0%, #141414 75%)";
+  const compact = rootW < OS_WIDE.full;
+  const side = compact ? OS_WIDE.sideS : OS_WIDE.side;
+  const rightW = Math.min(rootW, OS_WIDE.max) - 16 - 8 - side - (compact ? 28 : 36);
+  const two = rightW >= 460;
+  const tileCols = rightW >= 540 ? 3 : 2;
+  const spanAll = { gridColumn: "1 / -1" };
+
+  // 왼쪽 메뉴 (누르면 오른쪽 내용을 골라 보여 줌)
+  const navIcon = {
+    all: <path d="M3 10.5L12 3l9 7.5V21h-6v-6H9v6H3z" />,
+    now: (
+      <g>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </g>
+    ),
+    town: (
+      <g>
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5" />
+        <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8" />
+        <path d="M18 14.8c1.9.6 3.1 2.4 3.5 5.2" />
+      </g>
+    ),
+  };
+
+  const wideNav = (
+    <div style={{ background: "#121212", borderRadius: 8, padding: "8px 6px", flexShrink: 0 }}>
+      {OS_TABS.map((t) => {
+        const on = tab === t[0];
+        return (
+          <div key={t[0]} onClick={() => setTab(t[0])} className="os-nav" style={{ position: "relative", display: "flex", alignItems: "center", gap: compact ? 10 : 14, height: 34, padding: compact ? "0 10px" : "0 12px", borderRadius: 6, cursor: "pointer", color: on ? "#fff" : sub, fontSize: compact ? 13 : 13.5, fontWeight: on ? 800 : 600 }}>
+            {on ? <span style={{ position: "absolute", left: 0, top: 9, bottom: 9, width: 3, borderRadius: 2, background: T.accent }} /> : null}
+            {icon(navIcon[t[0]], compact ? 18 : 20, on ? "#fff" : sub)}
+            <span>{t[1]}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  const art = side - (compact ? 28 : 40);
+  const wideSide = (
+    <div style={{ width: side, flexShrink: 0, display: "flex", flexDirection: "column", gap: 8, minHeight: 0 }}>
+      {wideNav}
+      <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", background: "#121212", borderRadius: 8, padding: 14, boxSizing: "border-box", overflow: "hidden" }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>{plinth(art, true)}</div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 14 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <OsMarquee style={{ fontSize: compact ? 15.5 : 18, fontWeight: 800, letterSpacing: -0.3 }}>{songTitle}</OsMarquee>
+            <OsMarquee style={{ fontSize: compact ? 12 : 13, color: sub, marginTop: 2 }}>{silent ? "아무것도 흐르지 않는다" : artist}</OsMarquee>
+          </div>
+          {icon(<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21.2l7.8-7.7 1-1.1a5.5 5.5 0 0 0 0-7.8z" />, compact ? 18 : 22, "#fff")}
+        </div>
+
+        <div style={{ marginTop: 12 }}>
+          {progress}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: sub, marginTop: 7, fontVariantNumeric: "tabular-nums" }}>
+            <span>{osClock(silent ? 0 : sec)}</span>
+            <span>{"-" + osClock(silent ? dur : dur - sec)}</span>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: compact ? "0 2px" : "0 10px", marginTop: 6 }}>
+          {icon(
+            <g>
+              <path d="M19 20L9 12l10-8z" fill="#fff" />
+              <path d="M5 19V5" strokeWidth="2.6" />
+            </g>,
+            compact ? 22 : 26,
+            "#fff"
+          )}
+          <div className={silent ? "" : "os-pulse"} style={{ width: compact ? 42 : 50, height: compact ? 42 : 50, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            {icon(silent ? <path d="M8 5l12 7-12 7z" fill="#000" stroke="none" /> : <g fill="#000" stroke="none"><rect x="6" y="4.5" width="4" height="15" rx="1" /><rect x="14" y="4.5" width="4" height="15" rx="1" /></g>, compact ? 18 : 22, "#000")}
+          </div>
+          {icon(
+            <g>
+              <path d="M5 4l10 8-10 8z" fill="#fff" />
+              <path d="M19 5v14" strokeWidth="2.6" />
+            </g>,
+            compact ? 22 : 26,
+            "#fff"
+          )}
+        </div>
+
+        <div style={{ flex: 1 }} />
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {icon(
+            <g>
+              <rect x="5" y="2" width="14" height="20" rx="2" />
+              <circle cx="12" cy="14" r="4" />
+              <path d="M12 6h.01" />
+            </g>,
+            16,
+            T.accent
+          )}
+          <OsMarquee style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 700, color: T.accent }}>{source || "어디선가"}</OsMarquee>
+        </div>
+      </div>
+    </div>
+  );
+
+  // 맨 위 요약 키워드 (누를 수 없음). 관계 단계 → 오손의 감정 → 몸 상태 첫 항목 → 날씨. 값이 비어 있으면 그 칸은 안 보임.
+  const sumTags = [{ t: OS_STAGE[stage - 1].kr, main: true }];
+  if (mood) sumTags.push({ t: mood });
+  if (bodyItems.length) {
+    const ic = osBodyIcon(bodyItems[0]);
+    sumTags.push({ t: (ic === "•" ? "" : ic + " ") + bodyItems[0] });
+  }
+  if (weather) sumTags.push({ t: wx + " " + weather });
+
+  const wideTop = (
+    <div style={{ display: "flex", alignItems: "center", flexWrap: compact ? "wrap" : "nowrap", gap: 10, rowGap: 10, marginBottom: compact ? 14 : 16 }}>
+      {compact ? null : <div style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0, background: T.accent, color: ink, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800 }}>O</div>}
+      <div style={{ order: compact ? 2 : 0, flex: compact ? "1 1 100%" : 1, minWidth: 0, display: "flex", flexWrap: "wrap", gap: 6 }}>
+        {sumTags.map((g, i) => (
+          <span key={i} style={{ padding: "6px 12px", borderRadius: 16, fontSize: 12.5, fontWeight: 700, whiteSpace: "nowrap", cursor: "default", background: g.main ? T.accent : "rgba(255,255,255,.1)", color: g.main ? "#000" : "#fff" }}>
+            {g.t}
+          </span>
+        ))}
+      </div>
+      <div style={{ flex: compact ? "1 1 0" : "0 1 auto", minWidth: 60, maxWidth: compact ? "none" : 200, textAlign: compact ? "left" : "right" }}>
+        <div style={{ fontSize: 9.5, letterSpacing: 1.4, fontWeight: 700, color: "rgba(255,255,255,.7)" }}>PLAYING FROM</div>
+        <OsMarquee style={{ fontSize: 12, fontWeight: 800, marginTop: 1, textAlign: compact ? "left" : "right" }}>{place || "B-Side Vinyl & Frets"}</OsMarquee>
+      </div>
+      <div onClick={() => setOpen(false)} title="접기" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,.45)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+        {icon(<path d="M6 9l6 6 6-6" />, 20, "#fff")}
+      </div>
+    </div>
+  );
+
+  const wBox = (key, kr, en, children, span, delay) => (
+    <div key={key} className="os-rise" style={{ ...(span ? spanAll : {}), minWidth: 0, background: "rgba(255,255,255,.07)", borderRadius: 10, padding: "14px 14px 15px", boxSizing: "border-box", animationDelay: delay }}>
+      {heading(kr, en)}
+      {children}
+    </div>
+  );
+
+  const wBare = (key, kr, en, children, span, delay) => (
+    <div key={key} className="os-rise" style={{ ...(span ? spanAll : {}), minWidth: 0, display: "flex", flexDirection: "column", animationDelay: delay }}>
+      {heading(kr, en)}
+      {children}
+    </div>
+  );
+
+  const tile = (k, label, value, fb, wideTile) => (
+    <div key={k} className="os-tile" style={{ gridColumn: wideTile ? "span 2" : undefined, minWidth: 0, display: "flex", alignItems: "center", height: 56, borderRadius: 6, overflow: "hidden" }}>
+      <div style={{ width: 56, height: 56, flexShrink: 0, background: "linear-gradient(135deg, " + T.accent + ", " + T.card + ")", display: "flex", alignItems: "center", justifyContent: "center" }}>{fb}</div>
+      <div style={{ flex: 1, minWidth: 0, padding: "0 12px" }}>
+        <div style={{ fontSize: 10.5, fontWeight: 700, color: sub, letterSpacing: 0.3 }}>{label}</div>
+        <OsMarquee style={{ fontSize: 13.5, fontWeight: 800, marginTop: 1 }}>{value}</OsMarquee>
+      </div>
+    </div>
+  );
+
+  const wideTiles = (
+    <div key="tiles" className="os-rise" style={{ ...spanAll, display: "grid", gridTemplateColumns: "repeat(" + tileCols + ", minmax(0, 1fr))", gap: 8 }}>
+      {date ? tile("date", "날짜", date, icon(<g><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></g>, 24, ink)) : null}
+      {time ? tile("time", "시간", time, icon(<g><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></g>, 24, ink)) : null}
+      {weather ? tile("weather", "날씨", weather, <span style={{ fontSize: 24 }}>{wx}</span>) : null}
+      {place ? tile("place", "장소", place, <span style={{ fontSize: 24 }}>📍</span>) : null}
+      {tile("body", "몸 상태", bodyItems.length ? bodyItems.map((b) => { const ic = osBodyIcon(b); return (ic === "•" ? "" : ic + " ") + b; }).join(" · ") : "그럭저럭 멀쩡하다.", icon(<path d="M3 12h4l2-5 4 10 2-5h6" />, 24, ink), true)}
+    </div>
+  );
+
+  const album = (s, i) => {
+    const n = i + 1;
+    const cur = n === stage;
+    const locked = n > stage;
+    return (
+      <div key={n} className="os-card" style={{ minWidth: 0, padding: 10, borderRadius: 8, boxSizing: "border-box", opacity: locked ? 0.5 : 1 }}>
+        <div style={{ position: "relative", paddingTop: "100%", borderRadius: 6, overflow: "hidden", background: plinthBg, boxShadow: "0 8px 20px rgba(0,0,0,.45)" }}>
+          <div style={{ position: "absolute", left: "12%", top: "12%", width: "76%", height: "76%" }}>
+            <div className={cur && !silent ? "os-spin" : ""} style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "repeating-radial-gradient(circle at 50% 50%, #111 0px, #111 1.4px, #1f1f1f 2px, #111 2.8px)", boxShadow: "0 6px 14px rgba(0,0,0,.6)" }}>
+              <div style={{ position: "absolute", left: "33%", top: "33%", width: "34%", height: "34%", borderRadius: "50%", background: "conic-gradient(" + T.accent + " 0deg 180deg, " + T.label2 + " 180deg 360deg)" }}>
+                <span style={{ position: "absolute", left: "50%", top: "50%", width: 4, height: 4, borderRadius: "50%", background: "#0b0b0b", transform: "translate(-50%,-50%)" }} />
+              </div>
+            </div>
+            <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "conic-gradient(from 20deg, transparent 0deg, rgba(255,255,255,.09) 28deg, transparent 58deg, transparent 182deg, rgba(255,255,255,.06) 208deg, transparent 238deg)" }} />
+          </div>
+          <span style={{ position: "absolute", left: 10, top: 8, fontSize: 11, fontWeight: 800, letterSpacing: 1, color: "rgba(255,255,255,.55)" }}>{"0" + n}</span>
+          {pic(OS_IMG.stage[i], locked ? { filter: "blur(8px) grayscale(1) brightness(.5)", transform: "scale(1.15)" } : null)}
+          {locked ? <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,.35)", fontSize: 26 }}>🔒</div> : null}
+          {cur ? (
+            <div style={{ position: "absolute", right: 8, bottom: 8, width: 38, height: 38, borderRadius: "50%", background: T.accent, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 6px 14px rgba(0,0,0,.45)" }}>{eq(14, "#000")}</div>
+          ) : null}
+        </div>
+        <div style={{ fontSize: 14, fontWeight: 700, marginTop: 10, color: cur ? T.accent : "#fff", wordBreak: "keep-all" }}>{s.kr}</div>
+        <div style={{ fontSize: 12.5, color: sub, marginTop: 3, lineHeight: 1.4, wordBreak: "keep-all" }}>{s.en + " · Orson Callahan"}</div>
+      </div>
+    );
+  };
+
+  const wideGrid = (
+    <div key={tab} style={{ display: "grid", gridTemplateColumns: two ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)", gap: 14, alignItems: "stretch" }}>
+      {show("now") ? wideTiles : null}
+
+      {show("now")
+        ? wBare(
+            "score",
+            "금주 · 금연",
+            "SCOREBOARD",
+            <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "12px 6px 10px", borderRadius: 10, background: "#0b0b0b", boxShadow: "inset 0 0 0 1px #262626" }}>
+              {scoreCol("금주", "DRY", sober, 0.15)}
+              <div style={{ width: 1, alignSelf: "stretch", background: "#262626" }} />
+              {scoreCol("금연", "NO SMOKE", smokeFree, 0.3)}
+            </div>,
+            false,
+            ".06s"
+          )
+        : null}
+      {show("now") ? wBare("wallet", "지갑", "RECEIPT", receipt, false, ".1s") : null}
+
+      {show("now")
+        ? wBare(
+            "rel",
+            "관계",
+            "SIDE A",
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(" + (two ? 4 : 2) + ", minmax(0, 1fr))", gap: 10 }}>{OS_STAGE.map(album)}</div>,
+            true,
+            ".12s"
+          )
+        : null}
+
+      {show("town")
+        ? wBox(
+            "town",
+            "동네 사정",
+            "AROUND TOWN",
+            threads.length ? (
+              <div style={{ display: "grid", gap: 12 }}>
+                {threads.map((t, i) => (
+                  <div key={i} style={{ display: "flex", gap: 11, alignItems: "center" }}>
+                    <div style={{ width: 38, height: 38, borderRadius: "50%", flexShrink: 0, background: "hsl(" + osHue(t.name || t.text) + ", 35%, 40%)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800 }}>{(t.name || "?").slice(0, 1)}</div>
+                    <div style={{ minWidth: 0, wordBreak: "keep-all" }}>
+                      <div style={{ fontSize: 14, fontWeight: 700 }}>{t.name || "누군가"}</div>
+                      <div style={{ fontSize: 12.5, color: sub, marginTop: 1, lineHeight: 1.4 }}>{t.text}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: sub }}>동네는 조용하다.</div>
+            ),
+            false,
+            ".16s"
+          )
+        : null}
+      {show("town")
+        ? wBox(
+            "known",
+            "크레딧",
+            "WHAT ORSON KNOWS",
+            known.length ? (
+              <div style={{ display: "grid", gap: 11 }}>
+                {known.map((k, i) => (
+                  <div key={i} style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, wordBreak: "keep-all" }}>{k.text}</div>
+                    {k.name ? <div style={{ fontSize: 12.5, color: sub, marginTop: 1 }}>{k.name}</div> : null}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: sub }}>아직 아는 게 없다.</div>
+            ),
+            false,
+            ".2s"
+          )
+        : null}
+      {show("town")
+        ? wBox(
+            "bench",
+            "작업대 위",
+            "ON THE BENCH",
+            pending.length ? (
+              <div style={{ display: "grid", gridTemplateColumns: two ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)", gap: 8 }}>{pending.map(tag)}</div>
+            ) : (
+              <div style={{ fontSize: 13, color: sub }}>작업대가 비었다. 드문 일이다.</div>
+            ),
+            true,
+            ".24s"
+          )
+        : null}
+    </div>
+  );
+
+  const wideView = (
+    <div className="os-rise" style={{ maxWidth: OS_WIDE.max, margin: "6px auto", height: compact ? OS_WIDE.hS : OS_WIDE.h, display: "flex", gap: 8, padding: 8, boxSizing: "border-box", background: "#000", borderRadius: 14, boxShadow: "0 12px 30px rgba(0,0,0,.35)" }}>
+      {wideSide}
+      <div ref={scrollRef} className="os-scroll" style={{ flex: 1, minWidth: 0, overflowY: "auto", overflowX: "hidden", borderRadius: 8, backgroundColor: "#121212", backgroundImage: "linear-gradient(180deg, " + T.top + "aa 0px, #121212 280px)", backgroundAttachment: "local", padding: compact ? "12px 14px 18px" : "14px 18px 22px", boxSizing: "border-box" }}>
+        {wideTop}
+        {wideGrid}
+      </div>
+    </div>
+  );
+
+  return (
+    <div ref={rootRef} style={{ fontFamily: font, color: "#fff", width: "100%", paddingTop: 48, boxSizing: "border-box", WebkitFontSmoothing: "antialiased" }}>
+      <style>{OS_CSS}</style>
+      {open && wide ? wideView : narrowView}
+    </div>
+  );
+}
+
+// ───── 이미지 자리 ─────
+// 관계 앨범 표지 4장만 이미지를 씁니다. "" 사이에 .webp 이미지 주소를 넣으면 그 자리에 그림이 들어갑니다.
+// 비워 두면 바이닐 그림이 그대로 나옵니다. 정사각형(1:1) · 권장 400×400. 아직 잠긴 단계는 흐리게 가려서 보여 줍니다.
+const OS_IMG = {
+  stage: ["", "", "", ""], // 1 초면·탐색기 / 2 친밀기 / 3 전환기 / 4 해금
+};
+
+// 넓은 창 치수. 상태창 칸 너비가 min 이상이면 넓은 창, 그보다 좁으면 기존 모양(폰).
+// min ~ full 사이는 '좁은 넓은 창'(왼쪽 열을 좁히고 오른쪽을 1열로 쌓음), full 이상은 2열.
+// max: 넓은 창 최대 너비 · h / hS: 넓은 창 높이 (기본 / 좁을 때) · side / sideS: 왼쪽 메뉴·재생 카드 너비 (기본 / 좁을 때)
+const OS_WIDE = { min: 540, full: 760, max: 980, h: 640, hS: 540, side: 280, sideS: 196 };
+
+const OS_TABS = [
+  ["all", "전체"],
+  ["now", "지금"],
+  ["town", "동네"],
+];
+
+// 긴 글자 한 줄. 칸에 다 들어가면 그대로 두고, 넘치면 음원 앱처럼 왼쪽으로 흘려 보여 준다.
+// 처음 글자에서 잠깐 멈춤 → 왼쪽으로 흐름 → 뒤따라 들어온 처음 글자가 제자리에 오면 다시 멈춤.
+const OS_MARQ = { fade: 8, gap: 36, speed: 30, hold: 2000 };
+
+function OsMarquee(props = {}) {
+  const p = props || {};
+  const H = osHooks();
+  const mkRef = H.r || ((v) => H.s(() => ({ current: v }))[0]);
+  const boxRef = mkRef(null);
+  const firstRef = mkRef(null);
+  const [dist, setDist] = H.s(0);
+
+  const measure = () => {
+    const box = boxRef.current;
+    const first = firstRef.current;
+    if (!box || !first) return;
+    const room = box.clientWidth - OS_MARQ.fade * 2;
+    const w = first.offsetWidth;
+    const next = room > 0 && w > room + 1 ? w + OS_MARQ.gap : 0;
+    setDist((d) => (d === next ? d : next));
+  };
+
+  H.e(() => {
+    measure();
+  });
+
+  H.e(() => {
+    if (typeof ResizeObserver === "undefined") return undefined;
+    const ro = new ResizeObserver(() => measure());
+    if (boxRef.current) ro.observe(boxRef.current);
+    if (firstRef.current) ro.observe(firstRef.current);
+    return () => ro.disconnect();
+  }, []);
+
+  const over = dist > 0;
+  const f = OS_MARQ.fade;
+  const mask = "linear-gradient(90deg, transparent 0, #000 " + f + "px, #000 calc(100% - " + f + "px), transparent 100%)";
+  const total = over ? Math.round(OS_MARQ.hold + (dist / OS_MARQ.speed) * 1000) : 0;
+  const holdPct = over ? ((OS_MARQ.hold / total) * 100).toFixed(2) : "0";
+  const kf = "osMq" + dist;
+
+  return (
+    <div
+      ref={boxRef}
+      style={{
+        ...(p.style || {}),
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        marginLeft: -f,
+        marginRight: -f,
+        paddingLeft: f,
+        paddingRight: f,
+        textAlign: over ? "left" : (p.style || {}).textAlign,
+        maskImage: over ? mask : undefined,
+        WebkitMaskImage: over ? mask : undefined,
+      }}
+    >
+      {over ? <style>{"@keyframes " + kf + " { 0%, " + holdPct + "% { transform: translateX(0); } 100% { transform: translateX(-" + dist + "px); } }"}</style> : null}
+      <span className={over ? "os-mq" : ""} style={{ display: "inline-block", animation: over ? kf + " " + total + "ms linear infinite" : undefined }}>
+        <span ref={firstRef} style={{ display: "inline-block" }}>{p.children}</span>
+        {over ? (
+          <span aria-hidden="true" style={{ display: "inline-block", paddingLeft: OS_MARQ.gap }}>
+            {p.children}
+          </span>
+        ) : null}
+      </span>
     </div>
   );
 }
@@ -552,6 +978,16 @@ const OS_STAGE = [
   { kr: "전환기", en: "Turning Point" },
   { kr: "해금", en: "The B-Side" },
 ];
+
+// React 기능(useState·useEffect·useRef)을 React에서 직접 꺼내 쓴다. 없으면 플랫폼이 넣어 준 것을 쓴다.
+function osHooks() {
+  const R = typeof React !== "undefined" && React ? React : {};
+  return {
+    s: R.useState || (typeof useState === "function" ? useState : null),
+    e: R.useEffect || (typeof useEffect === "function" ? useEffect : null),
+    r: R.useRef || (typeof useRef === "function" ? useRef : null),
+  };
+}
 
 function osVal(v, d) {
   if (v === undefined || v === null) return d;
@@ -628,17 +1064,19 @@ function osSilent(song, source) {
   return /무음|정적|조용/.test(song) || /무음|정적/.test(source || "");
 }
 
-function osWx(w, tod) {
+const OS_WX = { storm: "⛈️", sleet: "🌨️", snow: "❄️", rain: "🌧️", fog: "🌫️", wind: "💨", cloud: "☁️", clear: "☀️", clearNight: "🌙", etc: "🌥️" };
+
+function osWxKey(w, tod) {
   const s = String(w || "");
-  if (/뇌우|천둥|번개/.test(s)) return "⛈️";
-  if (/진눈깨비/.test(s)) return "🌨️";
-  if (/눈/.test(s)) return "❄️";
-  if (/비|소나기/.test(s)) return "🌧️";
-  if (/안개/.test(s)) return "🌫️";
-  if (/바람/.test(s)) return "💨";
-  if (/흐림|흐리|구름/.test(s)) return "☁️";
-  if (/맑/.test(s)) return tod === "night" || tod === "dawn" ? "🌙" : "☀️";
-  return "🌥️";
+  if (/뇌우|천둥|번개/.test(s)) return "storm";
+  if (/진눈깨비/.test(s)) return "sleet";
+  if (/눈/.test(s)) return "snow";
+  if (/비|소나기/.test(s)) return "rain";
+  if (/안개/.test(s)) return "fog";
+  if (/바람/.test(s)) return "wind";
+  if (/흐림|흐리|구름/.test(s)) return "cloud";
+  if (/맑/.test(s)) return tod === "night" || tod === "dawn" ? "clearNight" : "clear";
+  return "etc";
 }
 
 function osBodyIcon(s) {
@@ -689,7 +1127,17 @@ const OS_CSS = `
 .os-arm-rest { transform: rotate(-24deg); }
 @keyframes osGlow { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 .os-glow { animation: osGlow 2s ease-in-out infinite; }
+.os-card { background: rgba(255,255,255,.04); transition: background .2s ease; }
+.os-card:hover { background: rgba(255,255,255,.1); }
+.os-tile { background: rgba(255,255,255,.08); transition: background .2s ease; }
+.os-tile:hover { background: rgba(255,255,255,.16); }
+.os-nav { transition: background .2s ease, color .2s ease; }
+.os-nav:hover { background: rgba(255,255,255,.06); }
+.os-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.22) transparent; }
+.os-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.os-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,.22); border-radius: 4px; }
+.os-scroll::-webkit-scrollbar-track { background: transparent; }
 @media (prefers-reduced-motion: reduce) {
-  .os-spin, .os-eq > span, .os-rise, .os-flip, .os-print, .os-stamp, .os-blink, .os-pulse, .os-arm, .os-glow { animation: none !important; }
+  .os-spin, .os-eq > span, .os-rise, .os-flip, .os-print, .os-stamp, .os-blink, .os-pulse, .os-arm, .os-glow, .os-mq { animation: none !important; }
 }
 `;
