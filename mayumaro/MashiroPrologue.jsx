@@ -1,7 +1,7 @@
 // 필요 훅: useState (react)
 // 마유마로 첫인사 프롤로그 (첫인사 전용)
 // 처음엔 접힌 노트 표지. '노트 펼치기'를 누르면 미학 입문 노트가 펼쳐진다.
-// 글은 맨 아래 MP_BLOCKS에 있다. t:"n" 서술, t:"d" 대사(who 화자, ja 일본어, ko 한국어), t:"gap" 장면 구분.
+// 글은 맨 아래 MP_BLOCKS에 있다. t:"n" 서술, t:"d" 대사(who 화자, ja 일본어, ko 한국어).
 // 펼친 채로 시작하려면 <MashiroPrologue defaultOpen={true} />
 
 function MashiroPrologue(props = {}) {
@@ -96,9 +96,7 @@ function mpPage(onClose) {
         {mpWobbleDefs()}
         <div className="mp-lines">
           {MP_BLOCKS.map((b, i) =>
-            b.t === "d" ? mpBalloon(b, i) : b.t === "profile" ? mpProfile(i) : b.t === "gap" ? (
-              <div className="mp-blk mp-gap" key={i} aria-hidden="true">✦　✦　✦</div>
-            ) : (
+            b.t === "d" ? mpBalloon(b, i) : b.t === "profile" ? mpProfile(i) : (
               <p className="mp-blk mp-n" key={i}>{mpRich(b.text)}</p>
             )
           )}
@@ -514,12 +512,6 @@ const MP_CSS = `
   font-size: 16px; line-height: 30px; color: var(--mp-ink-soft);
   word-break: keep-all; overflow-wrap: break-word;
 }
-/* 장면 구분: 공책 두 줄 높이, 별 세 개 */
-.mp-gap {
-  height: 60px; padding-bottom: 0;
-  font-size: 12px; line-height: 30px; letter-spacing: 0.3em;
-  text-align: center; color: var(--mp-pencil);
-}
 
 /* ---- 말풍선 ---- */
 .mp-bal-row { display: flex; flex-direction: column; align-items: flex-start; padding-top: 4px; padding-bottom: 34px; }
@@ -723,14 +715,5 @@ const MP_BLOCKS = [
   {"t": "n", "text": "그렇게 0.3초의 기억 하나로 그려 낸 첫 고수위 만화가 '루넬'의 간판 인기작이 되기까지 걸린 시간은 고작 반년."},
   {"t": "profile"},
   {"t": "n", "text": "여기까지는 인터뷰 때마다 포장해 온 눈부신 성공담이고, **진짜 재앙은 그다음에 찾아왔다.**\n연재 1년 차, 인생 최대의 슬럼프가 덮친 것이다."},
-  {"t": "n", "text": "마감은 코앞인데 콘티는 백지였고 머릿속은 하얗게 비어 버렸다.\n세이브 원고는 바닥난 지 오래, 길어지는 휴재에 '마유마로도 이제 감 다 죽었네' 같은 날 선 반응들이 가슴을 후벼 팠다.\n메일함에 쌓인 '선생님, 요즘 잘 지내시나요?'라는 편집자의 안부 메일 세 통이 사형 선고장처럼 무서워, 이불 속에 거대한 몸을 웅크리고 훌쩍이던 것이 불과 2주 전의 일이었다."},
-  {"t": "gap"},
-  {"t": "d", "who": "남학생", "ja": "「ねえねえ、この漫画…すっげぇエロくね？」", "ko": "야, 이 만화… 겁나 야하지 않냐?", "sfx": "ヒソヒソ"},
-  {"t": "n", "text": "강의실 중간 언저리, 나란히 앉은 남학생이 옆자리 여학생에게 폰 화면을 슬며시 내밀며 속닥거렸다."},
-  {"t": "d", "who": "여학생", "ja": "「あ、これ知ってる！」", "ko": "아, 나 이거 알아!"},
-  {"t": "d", "who": "남학생", "ja": "「え～すけべぇ～」", "ko": "에~ 변태~."},
-  {"t": "d", "who": "여학생", "ja": "「ちーがーいーまーす！まわりの友達が全部読んでるって言ったから、おすすめしてもらっただけだし。あたしここまでアレなのはちょっと……」", "ko": "아~니~거~든! 주변 친구들이 다 본다길래 추천받은 것뿐이거든? 난 이렇게까지는 좀……."},
-  {"t": "n", "text": "금요일 3교시.\n창가로 쏟아지는 따끈한 오후 햇살이 멀쩡한 대학생들을 집단 최면으로 몰살시키는 마의 시간대."},
-  {"t": "n", "text": "밥때도 애매한 데다 공석 창출의 일등 공신인 '미학 입문'이라는 수면제 같은 강의명까지.\n몇몇 독기 가득한 전공생을 빼면 다들 영혼이 가출한 얼굴로 널브러진 이 공간은 오늘도 쾌적하다 못해 황량했다."},
-  {"t": "n", "text": "하지만 누군가에게 이 하품 나는 수업은 일주일에 단 한 번 찾아오는 눈물겨운 **'구원의 시간'**이었는데……"}
+  {"t": "n", "text": "마감은 코앞인데 콘티는 백지였고 머릿속은 하얗게 비어 버렸다.\n세이브 원고는 바닥난 지 오래, 길어지는 휴재에 '마유마로도 이제 감 다 죽었네' 같은 날 선 반응들이 가슴을 후벼 팠다.\n메일함에 쌓인 '선생님, 요즘 잘 지내시나요?'라는 편집자의 안부 메일 세 통이 사형 선고장처럼 무서워, 이불 속에 거대한 몸을 웅크리고 훌쩍이던 것이 불과 2주 전의 일이었다."}
 ];
