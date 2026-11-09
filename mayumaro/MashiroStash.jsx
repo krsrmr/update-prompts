@@ -87,7 +87,7 @@ function MashiroStash(props = {}) {
                   className={"mz-row" + (it.isNew ? " mz-new" : "")}
                   style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", textAlign: "left", border: "2px solid " + (on ? c.ink : "transparent"), background: on ? "#fff" : "transparent", padding: "4px 6px", margin: "2px 0", borderRadius: 4, cursor: "pointer", fontFamily: "inherit", color: c.ink, animationDelay: i * 0.06 + "s" }}
                 >
-                  <span className="mz-dot" style={{ width: 10, color: c.newc, flex: "none" }}>{on ? "▶" : ""}</span>
+                  <span style={{ width: 10, flex: "none", display: "flex", alignItems: "center" }}>{on ? <MzArrow color={c.newc} /> : null}</span>
                   <span style={{ width: 30, height: 30, flex: "none", display: "flex", alignItems: "center", justifyContent: "center", background: cat.bg, border: "2px solid " + c.ink, borderRadius: 4, fontSize: 16 }}>{cat.icon}</span>
                   <span style={{ flex: 1, minWidth: 0 }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
@@ -172,5 +172,16 @@ const MZ_CSS = `
 .mz-new { background: linear-gradient(90deg, rgba(255,214,226,.75), rgba(255,255,255,0)) !important; animation: mz-in .3s ease-out both, mz-glow 1.6s ease-in-out .4s infinite; }
 .mz-badge { font-size: 10.5px; color: #fff; background: #e2457a; border: 1.5px solid #2b2420; padding: 0 4px; line-height: 15px; flex: none; animation: mz-blink 1s steps(2) infinite; }
 .mz-type { animation: mz-type .5s steps(18) both; }
-@media (prefers-reduced-motion: reduce) { .mz-win, .mz-row, .mz-new, .mz-badge, .mz-type { animation: none; } }
+@keyframes mz-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(2px); } }
+.mz-cur { animation: mz-nudge .8s steps(2) infinite; }
+@media (prefers-reduced-motion: reduce) { .mz-win, .mz-row, .mz-new, .mz-badge, .mz-type, .mz-cur { animation: none; } }
 `;
+
+/* 선택 커서: 도트 화살표 (글자 ▶는 아이폰에서 파란 이모지로 바뀌어서 직접 그린다) */
+function MzArrow({ color }) {
+  return (
+    <svg viewBox="0 0 5 7" width="10" height="14" aria-hidden="true" shapeRendering="crispEdges" className="mz-cur" style={{ display: "block" }}>
+      <path d="M0 0h1v7H0zM1 1h1v5H1zM2 2h1v3H2zM3 3h1v1H3z" fill={color} />
+    </svg>
+  );
+}
