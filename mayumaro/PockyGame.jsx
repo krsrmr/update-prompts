@@ -1,10 +1,11 @@
-// 필요 훅: useState (react)
-// [포키] 명령어 전용. 포키 게임 한 판의 결과를 다시 보여 주는 기록 카드.
-// 결과는 AI가 정하고, 위젯은 두 사람이 한 입씩 다가가는 모습을 재생한다.
-//   result: 기권 / 부러짐 / 닿음      by: 기권하거나 부러뜨린 사람 (닿음이면 생략)
-//   left: 남은 거리 mm (0~135)        bpm: 마시로의 최고 심박
-//   flavor: 맛 (초코·딸기·말차·아몬드·극세, 그 밖은 초코 색)
-// 결과 그림: 그림을 올린 뒤 아래 PG_IMG의 따옴표 안에 주소를 넣으면 카드 맨 위에 뜬다. 비워 두면 그림 없이 나온다.
+// 필요 훅: useState, useRef, useEffect (react)
+// [포키] 명령어 전용. 포키데이 포키 게임.
+//   mode="play"   : 직접 하는 미니게임. 꾹 누르면 먹어 들어가고, 떼면 멈춘다.
+//                   끝나면 '!포키결과 …' 문구가 나오고, 유저가 그 문구를 보내면 AI가 그 결과대로 장면을 쓴다.
+//                   값: date, flavor, phase(1~5), dating(true/false), userName
+//   mode="result" : 결과 기록 카드(재생). AI가 장면을 쓴 뒤에 낸다. (mode를 안 쓰면 이쪽)
+//                   값: date, flavor, left(남은 mm), result(기권/부러짐/닿음), by, bpm, mashiroFace, userFace, userName, memo
+// 결과 그림: 그림을 올린 뒤 아래 PG_IMG의 따옴표 안에 주소를 넣으면 결과 화면에 뜬다. 비워 두면 그림 없이 나온다.
 //   예) 기권: "https://krsrmr.github.io/mayumaro/img/pocky-giveup.webp"
 
 const PG_IMG = {
@@ -14,6 +15,13 @@ const PG_IMG = {
 };
 
 function PockyGame(props = {}) {
+  const p = props || {};
+  return p.mode === "play" ? <PgPlay {...p} /> : <PgResult {...p} />;
+}
+
+/* ───────── 결과 카드 (mode="result") ───────── */
+
+function PgResult(props) {
   const {
     title = "ポッキーの日",
     date = "11/11",
@@ -154,6 +162,265 @@ function PockyGame(props = {}) {
     </div>
   );
 }
+
+/* ───────── 미니게임 (mode="play") ───────── */
+
+function PgPlay(p) {
+  const c = PG_C;
+  const flavor = p.flavor == null || p.flavor === "" ? "초코" : String(p.flavor);
+  const date = p.date == null ? "11/11" : String(p.date);
+  const title = p.title == null ? "ポッキーの日" : String(p.title);
+  const userName = p.userName == null || p.userName === "" ? "당신" : String(p.userName);
+  const phase = Math.max(1, Math.min(5, Math.round(Number(p.phase) || 3)));
+  const dating = p.dating === true || p.dating === "true";
+  const fl = pgFlavor(flavor);
+  const wcap = fl.thin ? 75 : 100;
+
+  const g = useRef(null);
+  const hold = useRef(false);
+  const timer = useRef(null);
+  const lineRef = useRef(null);
+  const [view, setView] = useState(null);
+  const [round, setRound] = useState(1);
+  const [best, setBest] = useState(null);
+  const [copied, setCopied] = useState(0);
+  const [pressing, setPressing] = useState(false);
+
+  if (!g.current) g.current = pgFresh(phase, dating);
+  useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
+
+  function finish(s, res, by, why) {
+    s.st = "done"; s.res = res; s.by = by; s.why = why || "";
+    if (timer.current) { clearInterval(timer.current); timer.current = null; }
+    hold.current = false; setPressing(false);
+    setBest((b) => (b == null ? Math.round(s.d) : Math.min(b, Math.round(s.d))));
+    setView(pgSnap(s));
+  }
+
+  function step() {
+    const s = g.current;
+    if (!s || s.st !== "run") return;
+    const K = PG_K, dt = 0.05, h = hold.current;
+    if (h && !s.prev) { s.d -= K.tapBite; s.w += K.wTap; s.shock += K.tapShock / s.nerve; }
+    s.prev = h;
+    s.idle = h ? 0 : s.idle + dt;
+    if (s.idle > K.idleAfter) s.awk += (K.idleRise / s.nerve) * dt;
+    if (h) { s.d -= K.speed * dt; s.w += K.wUp * dt; s.shock += (K.shockUp / s.nerve) * dt; }
+    else { s.w = Math.max(0, s.w - K.wDown * dt); s.shock = Math.max(0, s.shock - K.shockDown * dt); }
+    s.nibFx = Math.max(0, s.nibFx - dt);
+    s.nn -= dt;
+    let nibbled = false;
+    if (s.nn <= 0) {
+      s.d -= 1.5 + Math.random() * 2; s.w += K.wNib; s.shock += K.nibShock / s.nerve;
+      s.nn = s.nib[0] + Math.random() * (s.nib[1] - s.nib[0]); s.nibFx = 0.35; nibbled = true;
+    }
+    s.t += dt;
+    s.heart = pgHeart(s);
+    s.peak = Math.max(s.peak, s.heart);
+    s.tilt = (Math.random() - 0.5) * s.w * 0.14;
+    if (s.w >= wcap) return finish(s, "부러짐", nibbled || !h ? "마시로" : "나");
+    if (!dating && s.d <= s.floor) { s.d = s.floor; return finish(s, "기권", "마시로", "한계"); }
+    if (s.d <= 0) { s.d = 0; return finish(s, "닿음", ""); }
+    if (s.heart >= K.cap) return finish(s, "기권", "마시로", "심박");
+    setView(pgSnap(s));
+  }
+
+  function press(on) {
+    const s = g.current;
+    if (s.st === "done") return;
+    hold.current = on; setPressing(on);
+    if (on && s.st === "ready") {
+      s.st = "run";
+      if (timer.current) clearInterval(timer.current);
+      timer.current = setInterval(step, 50);
+    }
+  }
+
+  function letGo() {
+    const s = g.current;
+    if (s.st === "run") finish(s, "기권", "나");
+  }
+
+  function retry() {
+    if (timer.current) { clearInterval(timer.current); timer.current = null; }
+    hold.current = false; setPressing(false);
+    g.current = pgFresh(phase, dating);
+    setRound((r) => r + 1); setCopied(0);
+    setView(pgSnap(g.current));
+  }
+
+  const v = view || pgSnap(g.current);
+  const mm = Math.max(0, Math.round(v.d));
+  const hRatio = Math.max(0, Math.min(1, (v.heart - PG_K.h0) / (PG_K.cap - PG_K.h0)));
+  const wRatio = Math.max(0, Math.min(1, v.w / wcap));
+  const done = v.st === "done";
+  const stickPx = Math.max(0, Math.round((v.d / PG_K.d0) * PG_PLAY_PX));
+  const verdict = !done ? "" : v.res === "닿음" ? "닿음" : v.res === "부러짐" ? (v.by === "나" ? "내 쪽에서 부러짐" : "마시로 쪽에서 부러짐") : (v.by === "나" ? "내가 놓음" : "마시로 기권");
+  const line = done ? "!포키결과 남은 " + mm + "mm · " + verdict + " · " + flavor + " · " + round + "판째 · " + Math.max(1, Math.round(v.t)) + "초 · 심박 " + Math.round(v.peak) : "";
+  const stamp = done ? PG_STAMP[v.res] : null;
+  const img = done ? PG_IMG[v.res] : "";
+
+  const mFace = done
+    ? (v.res === "닿음" ? "(⁄ ⁄>⁄ ▽ ⁄<⁄ ⁄)" : v.res === "부러짐" ? "(゜ロ゜)" : v.by === "나" ? "(・_・;)" : "(>﹏<)💦")
+    : hRatio < 0.3 ? "(・_・;)" : hRatio < 0.55 ? "(°ー°;)" : hRatio < 0.8 ? "(>_<;)" : "(⁄⁄>⁄﹏⁄<⁄⁄)";
+  const uFace = done ? (v.res === "닿음" ? "(˶ᵔ ᵕ ᵔ˶)" : "(・ω・)") : pressing ? "(˘ε˘)" : "(・ω・)";
+  const copy = () => {
+    const fallback = () => {
+      const el = lineRef.current;
+      if (el) { el.focus(); el.select(); }
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      setCopied(ok ? 1 : 2);
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(line).then(() => setCopied(1), fallback);
+      } else fallback();
+    } catch (e) { fallback(); }
+  };
+
+  return (
+    <div style={{ width: "100%", maxWidth: 360, margin: "10px auto", fontFamily: PG_FONT, color: c.ink, userSelect: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}>
+      <style>{PG_CSS}</style>
+      <div style={{ background: c.card, border: "2px solid " + c.ink, borderRadius: 14, boxShadow: "3px 3px 0 " + c.ink, overflow: "hidden" }}>
+
+        {img ? <img src={img} alt="" style={{ display: "block", width: "100%", aspectRatio: "1 / 1", objectFit: "cover", borderBottom: "2px solid " + c.ink }} /> : null}
+
+        {/* 제목 줄 */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "8px 12px", background: c.pink, borderBottom: "2px solid " + c.ink }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0 }}>
+            <span style={{ fontWeight: 800, fontSize: 15 }}>{date.replace("/", ".")}</span>
+            <span style={{ fontWeight: 700, fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</span>
+          </div>
+          <div style={{ display: "flex", gap: 5, flex: "none" }}>
+            <span style={{ fontSize: 11.5, fontWeight: 700, background: c.ink, color: "#fff", borderRadius: 999, padding: "2px 8px" }}>{round}판째</span>
+            <span style={{ fontSize: 11.5, fontWeight: 700, background: "#fff", border: "2px solid " + c.ink, borderRadius: 999, padding: "0 8px" }}>
+              <span style={{ display: "inline-block", width: 8, height: 8, borderRadius: 2, background: fl.coat, marginRight: 5 }} />{flavor}
+            </span>
+          </div>
+        </div>
+
+        {/* 무대 */}
+        <div key={"r" + round} style={{ position: "relative", padding: "26px 10px 24px", background: c.stage }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 64 }}>
+            <PgFace face={uFace} name={userName} c={c} />
+            <div style={{ position: "relative", flex: "none", width: stickPx, height: fl.thin ? 4 : 7, marginLeft: v.res === "닿음" ? -2 : 0, marginRight: v.res === "닿음" ? -2 : 0, transform: done ? "none" : "rotate(" + v.tilt.toFixed(2) + "deg) translateY(" + (v.tilt * 0.4).toFixed(1) + "px)", transition: "width .05s linear" }}>
+              <div className={done && v.res === "부러짐" ? "pg-half-l" : ""} style={{ position: "absolute", left: 0, top: 0, width: "50%", height: "100%", background: "linear-gradient(90deg," + c.biscuit + " 0 20%," + fl.coat + " 20% 100%)", borderRadius: "3px 0 0 3px" }}>
+                {fl.dots ? <div style={{ position: "absolute", inset: 0, backgroundImage: PG_DOTS }} /> : null}
+              </div>
+              <div className={done && v.res === "부러짐" ? "pg-half-r" : ""} style={{ position: "absolute", right: 0, top: 0, width: "50%", height: "100%", background: fl.coat, borderRadius: "0 3px 3px 0" }}>
+                {fl.dots ? <div style={{ position: "absolute", inset: 0, backgroundImage: PG_DOTS }} /> : null}
+              </div>
+            </div>
+            <div className={done && v.res === "기권" && v.by !== "나" ? "pg-flee" : ""} style={{ position: "relative" }}>
+              <PgFace face={mFace} name="真白" c={c} dark />
+              {v.nibFx > 0 ? <span className="pg-pop" style={{ position: "absolute", left: -6, top: -18, fontSize: 11, fontWeight: 800, color: c.sub }}>ぽりっ</span> : null}
+            </div>
+          </div>
+          {done && v.res === "부러짐" ? <div className="pg-pop" style={{ position: "absolute", left: 0, right: 0, top: 6, textAlign: "center", fontWeight: 900, fontSize: 15, color: c.red }}>ポキッ！</div> : null}
+          {done && v.res === "닿음" ? <div className="pg-pop" style={{ position: "absolute", left: 0, right: 0, top: 2, textAlign: "center", fontSize: 22, color: c.red }}>♡</div> : null}
+          {done ? (
+            <div className="pg-stamp" style={{ position: "absolute", right: 12, bottom: 6, transform: "rotate(-10deg)", border: "2.5px solid " + stamp.color, color: stamp.color, borderRadius: 8, padding: "1px 7px", fontWeight: 900, fontSize: 15, background: "rgba(255,255,255,.75)" }}>{v.by === "나" && v.res === "기권" ? "放棄" : stamp.label}</div>
+          ) : null}
+        </div>
+
+        {/* 거리 + 게이지 */}
+        <div style={{ padding: "10px 14px 6px", borderTop: "2px dashed " + c.line }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+            <span style={{ fontSize: 12, color: c.sub, fontWeight: 700 }}>남은 거리</span>
+            <span style={{ fontSize: 22, fontWeight: 900, fontVariantNumeric: "tabular-nums" }}>
+              {mm}<span style={{ fontSize: 12, fontWeight: 700, marginLeft: 2 }}>mm</span>
+              {done ? <span style={{ fontSize: 12, fontWeight: 700, color: stamp.color, marginLeft: 8 }}>{verdict}</span> : null}
+            </span>
+          </div>
+          <PgBar label="포키 흔들림" ratio={wRatio} color={wRatio > 0.7 ? c.red : "#e3a548"} c={c} />
+          <PgBar label={"마시로 심박 " + Math.round(v.heart)} ratio={hRatio} color={hRatio > 0.8 ? c.red : "#e98aa3"} c={c} beat={!done && v.st === "run"} />
+        </div>
+
+        {/* 조작 / 결과 */}
+        {!done ? (
+          <div style={{ padding: "6px 14px 14px" }}>
+            <div style={{ fontSize: 11.5, color: c.sub, lineHeight: 1.5, marginBottom: 8, wordBreak: "keep-all" }}>
+              {v.st === "ready" ? "꾹 누르면 먹어 들어가고, 떼면 멈춰요. 오래 누르면 포키가 흔들리다 부러지고, 서두르거나 머뭇거리면 마시로가 먼저 입을 떼요." : "흔들림이 차면 손을 떼고, 마시로 심박도 보면서."}
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+              <button
+                type="button"
+                onPointerDown={(e) => { e.preventDefault(); try { e.currentTarget.setPointerCapture(e.pointerId); } catch (err) {} press(true); }}
+                onPointerUp={() => press(false)}
+                onPointerCancel={() => press(false)}
+                onLostPointerCapture={() => press(false)}
+                onContextMenu={(e) => e.preventDefault()}
+                style={{ flex: 1, height: 54, border: "2px solid " + c.ink, borderRadius: 999, background: pressing ? c.red : c.pink, color: pressing ? "#fff" : c.ink, fontFamily: "inherit", fontSize: 15, fontWeight: 900, cursor: "pointer", touchAction: "none", boxShadow: pressing ? "none" : "0 3px 0 " + c.ink, transform: pressing ? "translateY(3px)" : "none" }}
+              >
+                {v.st === "ready" ? "꾹 눌러서 시작" : pressing ? "냠…" : "꾹 눌러서 먹기"}
+              </button>
+              <button type="button" onClick={letGo} disabled={v.st !== "run"} style={{ flex: "none", width: 64, border: "2px solid " + c.ink, borderRadius: 999, background: "#fff", color: c.ink, fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, cursor: v.st === "run" ? "pointer" : "default", opacity: v.st === "run" ? 1 : 0.4 }}>놓기</button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ padding: "6px 14px 14px" }}>
+            <div style={{ fontSize: 11.5, color: c.sub, marginBottom: 5, wordBreak: "keep-all" }}>이 문구를 그대로 보내면 이야기가 이어져요{best != null ? " · 이번 최고 " + best + "mm" : ""}</div>
+            <textarea ref={lineRef} readOnly value={line} rows={2} onFocus={(e) => e.target.select()} style={{ width: "100%", boxSizing: "border-box", resize: "none", border: "2px solid " + c.ink, borderRadius: 8, background: c.note, color: c.ink, fontFamily: "inherit", fontSize: 13, lineHeight: 1.45, padding: "6px 8px", userSelect: "text", WebkitUserSelect: "text" }} />
+            <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
+              <button type="button" onClick={copy} style={{ border: "2px solid " + c.ink, background: c.ink, color: "#fff", fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, padding: "4px 14px", borderRadius: 999, cursor: "pointer" }}>복사</button>
+              <button type="button" onClick={retry} style={{ border: "2px solid " + c.ink, background: "#fff", color: c.ink, fontFamily: "inherit", fontSize: 12.5, fontWeight: 700, padding: "4px 12px", borderRadius: 999, cursor: "pointer" }}>↻ 다시 하기</button>
+              <span style={{ fontSize: 11.5, color: copied === 1 ? c.red : c.sub, fontWeight: 700 }}>{copied === 1 ? "복사됨" : copied === 2 ? "길게 눌러 복사해 주세요" : ""}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PgBar({ label, ratio, color, c, beat }) {
+  return (
+    <div style={{ marginBottom: 7 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: 700, color: c.sub, marginBottom: 3 }}>
+        <span>{label}</span>
+        {beat ? <span className="pg-beat" style={{ color: c.red, display: "inline-block" }}>♥</span> : null}
+      </div>
+      <div style={{ height: 9, border: "1.5px solid " + c.ink, borderRadius: 999, background: "#fff", overflow: "hidden" }}>
+        <div style={{ height: "100%", width: Math.round(ratio * 100) + "%", background: color, transition: "width .05s linear" }} />
+      </div>
+    </div>
+  );
+}
+
+function pgFresh(phase, dating) {
+  const r = Math.random;
+  const nib = PG_NIB[dating ? 5 : phase];
+  return {
+    st: "ready", d: PG_K.d0, w: 0, shock: 0, awk: 0, t: 0, idle: 0, prev: false,
+    floor: dating ? 0 : PG_FLOOR[phase] + r() * (phase <= 2 ? 15 : 10),
+    nerve: (dating ? 1.6 : PG_NERVE[phase]) * (0.92 + r() * 0.16),
+    nib: nib, nn: nib[0] + r() * (nib[1] - nib[0]),
+    heart: PG_K.h0, peak: PG_K.h0, tilt: 0, nibFx: 0, res: null, by: "", why: ""
+  };
+}
+
+function pgHeart(s) {
+  const near = Math.max(0, 1 - s.d / PG_K.d0);
+  return PG_K.h0 + (PG_K.bMax / s.nerve) * near * near + s.shock + (PG_K.tRise / s.nerve) * s.t + s.awk;
+}
+
+function pgSnap(s) {
+  return { st: s.st, d: s.d, w: s.w, heart: s.heart, peak: s.peak, t: s.t, tilt: s.tilt, nibFx: s.nibFx, res: s.res, by: s.by, why: s.why };
+}
+
+// 게임 수치 (시뮬레이션으로 맞춤: 신중하게 하면 마시로의 한계 근처, 서두르면 60mm대에서 부러짐, 머뭇거리면 100mm대에서 기권)
+const PG_K = {
+  d0: 120, speed: 18, tapBite: 0.8,
+  wUp: 32, wDown: 40, wTap: 4, wNib: 5,
+  h0: 92, cap: 175, bMax: 70, shockUp: 24, shockDown: 24, tapShock: 2, nibShock: 3, tRise: 2.4,
+  idleAfter: 1.2, idleRise: 7
+};
+// 관계 단계별 마시로가 버티는 가장 가까운 거리(mm). 판마다 0~10mm(단계 1~2는 0~15mm) 더 멀어질 수 있다. 연인이면 0.
+const PG_FLOOR = { 1: 70, 2: 50, 3: 15, 4: 8, 5: 3 };
+const PG_NERVE = { 1: 0.8, 2: 0.95, 3: 1.1, 4: 1.25, 5: 1.4 };
+const PG_NIB = { 1: [1.6, 2.6], 2: [1.4, 2.3], 3: [1.1, 2.0], 4: [1.0, 1.8], 5: [0.9, 1.6] };
+const PG_PLAY_PX = 160;
 
 /* ───────── 보조 요소 ───────── */
 
