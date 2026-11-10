@@ -77,7 +77,6 @@ function PgPlay(p) {
     s.peak = Math.max(s.peak, s.heart);
     s.tilt = (Math.random() - 0.5) * s.w * 0.14;
     if (s.w >= wcap) return finish(s, "부러짐", nibbled || !h ? "마시로" : "나");
-    if (!dating && s.d <= s.floor) { s.d = s.floor; return finish(s, "기권", "마시로", "한계"); }
     if (s.d <= 0) { s.d = 0; return finish(s, "닿음", ""); }
     if (s.heart >= K.cap) return finish(s, "기권", "마시로", "심박");
     setView(pgSnap(s));
@@ -695,7 +694,6 @@ function pgFresh(phase, dating) {
   const nib = PG_NIB[dating ? 5 : phase];
   return {
     st: "ready", d: PG_K.d0, w: 0, shock: 0, awk: 0, t: 0, idle: 0, prev: false,
-    floor: dating ? 0 : PG_FLOOR[phase] + r() * (phase <= 2 ? 15 : 10),
     nerve: (dating ? 1.6 : PG_NERVE[phase]) * (0.92 + r() * 0.16),
     nib: nib, nn: nib[0] + r() * (nib[1] - nib[0]),
     heart: PG_K.h0, peak: PG_K.h0, tilt: 0, nibFx: 0, res: null, by: "", why: ""
@@ -725,16 +723,16 @@ function pgFlavor(name) {
   return { coat: "#5b3a2c" };
 }
 
-// 게임 수치 (시뮬레이션으로 맞춤: 신중하게 하면 마시로의 한계 근처, 서두르면 60mm대에서 부러짐, 머뭇거리면 100mm 안팎에서 기권)
+// 게임 수치 (시뮬레이션으로 맞춤). 거리 한계선은 없다: 심박이 꽉 차거나 흔들림이 차야만 끝나고, 끝까지 가면 성공.
+//   1초 안쪽으로 끊어 누르면 단계가 낮아도 성공할 수 있고, 꾹 누르고만 있으면 60mm대에서 부러지고, 가만히 있으면 100mm 안팎에서 기권.
 const PG_K = {
   d0: 120, speed: 18, tapBite: 0.8,
   wUp: 32, wDown: 40, wTap: 4, wNib: 5,
-  h0: 92, cap: 175, bMax: 70, shockUp: 24, shockDown: 24, tapShock: 2, nibShock: 3, tRise: 2.4,
-  idleAfter: 1.2, idleRise: 7
+  h0: 92, cap: 175, bMax: 66, shockUp: 18, shockDown: 30, tapShock: 2, nibShock: 3, tRise: 1.6,
+  idleAfter: 1.2, idleRise: 5
 };
-// 관계 단계별 마시로가 버티는 가장 가까운 거리(mm). 판마다 0~10mm(단계 1~2는 0~15mm) 더 멀어질 수 있다. 연인이면 0.
-const PG_FLOOR = { 1: 70, 2: 50, 3: 15, 4: 8, 5: 3 };
-const PG_NERVE = { 1: 0.8, 2: 0.95, 3: 1.1, 4: 1.25, 5: 1.4 };
+// 관계 단계별 마시로의 담력. 낮을수록 심박이 빨리 오른다(어렵다). 연인이면 1.6.
+const PG_NERVE = { 1: 1.2, 2: 1.27, 3: 1.34, 4: 1.42, 5: 1.5 };
 const PG_NIB = { 1: [1.6, 2.6], 2: [1.4, 2.3], 3: [1.1, 2.0], 4: [1.0, 1.8], 5: [0.9, 1.6] };
 
 /* ───────── 모양 값 ───────── */
