@@ -11,9 +11,9 @@
 //   예) 성공: "https://krsrmr.github.io/mayumaro/img/pocky-sd-success.webp"
 
 const PG_SD = {
-  성공: "",
-  실패: "",
-  기권: ""
+  성공: "https://krsrmr.github.io/mayumaro/img/pocky-sd-success.webp",
+  실패: "https://krsrmr.github.io/mayumaro/img/pocky-sd-fail.webp",
+  기권: "https://krsrmr.github.io/mayumaro/img/pocky-sd-giveup.webp"
 };
 
 function PockyGame(props = {}) {
