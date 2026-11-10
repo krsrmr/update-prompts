@@ -8,7 +8,7 @@
 
 | 캐릭터 | 메인 프롬프트 | 첫인사 | 붙여넣기 안내 | 그 밖 |
 |---|---|---|---|---|
-| 마유마로 | [v9](mayumaro/261110%20prompt%20v9) (상태창 없는 본은 [v8 상태창 없음](mayumaro/261109%20prompt%20v8%20상태창%20없음)) | [v6](mayumaro/261109%20intro%20v6) | [v9 관계와 마음](mayumaro/261110%20v9%20관계와%20마음.md) · [v8.3 수정안](mayumaro/261110%20v8.3%20수정안.md) · [v8 무드](mayumaro/261109%20v8%20무드.md) · [v7 명령어·NSFW](mayumaro/261109%20v7%20명령어·NSFW.md) | 컴포넌트 JSX 7개 (`mayumaro/*.jsx`) |
+| 마유마로 | [v9](mayumaro/261110%20prompt%20v9) (상태창 없는 본은 [v8 상태창 없음](mayumaro/261109%20prompt%20v8%20상태창%20없음)) | [v6](mayumaro/261109%20intro%20v6) | [261110 전/후 비교](mayumaro/261110%20변경%20전후%20비교.md) · [통째 교체본](mayumaro/261110%20통째%20교체본.txt) · [v9 관계와 마음](mayumaro/261110%20v9%20관계와%20마음.md) · [v8.3 수정안](mayumaro/261110%20v8.3%20수정안.md) · [v8 무드](mayumaro/261109%20v8%20무드.md) · [v7 명령어·NSFW](mayumaro/261109%20v7%20명령어·NSFW.md) | 컴포넌트 JSX 7개 (`mayumaro/*.jsx`) |
 | 오손 캘러핸 | [v5](callahan/261105%20prompt%20v5) | — | [v5 변경](callahan/261105%20v5%20변경.md) · [보강](callahan/261105%20보강.md) · [상태창 v0.4](callahan/261107%20상태창%20v0.4.md) · [명령어 위젯](callahan/261109%20명령어%20위젯.md) · [혼잣말 위젯](callahan/261109%20혼잣말%20위젯.md) | 로어북 · 상태창 · 위젯 · 소개 · 에셋 템플릿 · 컴포넌트 [Orsonstatus](callahan/Orsonstatus.jsx) · [OrsonPod](callahan/OrsonPod.jsx) · [OrsonHistory](callahan/OrsonHistory.jsx) · [OrsonTape](callahan/OrsonTape.jsx) |
 | 요현 | [v3](yohyeon/261107%20prompt%20v3) | [intro](yohyeon/intro.md) | [보강 세트](yohyeon/261107%20보강%20세트.md) | [세계관](yohyeon/worldview.md) |
 
