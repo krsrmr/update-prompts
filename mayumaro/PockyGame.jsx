@@ -580,7 +580,7 @@ function PgBpm({ bpm }) {
   const b = Math.round(bpm);
   return (
     <span style={{ flex: "none", fontFamily: PG_COND, fontWeight: 900, fontSize: 19, color: c.red, fontVariantNumeric: "tabular-nums", minWidth: 60, textAlign: "right", lineHeight: 1 }}>
-      <span className="pg-beat" style={{ display: "inline-block", marginRight: 3, fontSize: 15, animationDuration: (60 / Math.max(60, b)).toFixed(2) + "s" }}>♥</span>{b}
+      <svg className="pg-beat" viewBox="0 0 12 11" width="14" height="13" style={{ display: "inline-block", verticalAlign: "-1px", marginRight: 3, overflow: "visible", transformOrigin: "50% 55%", animationDuration: (60 / Math.max(60, b)).toFixed(2) + "s" }}><path d={PG_HEART} fill={c.red} /></svg>{b}
       <span style={{ fontSize: 10, marginLeft: 2, fontFamily: PG_FONT }}>bpm</span>
     </span>
   );
