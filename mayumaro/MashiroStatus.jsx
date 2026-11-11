@@ -362,7 +362,7 @@ function MashiroStatus(props = {}) {
         </div>
       ) : null}
       <div className="ms-ntag" style={{ left: cx - 70, top: botY - spBox.height * MS_TAG_UP, width: 140 }}>
-        <span>{away ? "취재 외출중" : status + " " + msKao(mashiroFace)}</span>
+        <span>{away ? "취재 외출중" : <>{status} <i className="ms-nkao">{msKao(mashiroFace)}</i></>}</span>
       </div>
 
       {/* 위 정보 */}
@@ -534,9 +534,12 @@ function msDate(d, w) {
 
 /* 반각 탁점·반탁점(ﾞ ﾟ)은 앞 글자에 달라붙는 글자다. ✧ﾟ처럼 다른 폰트의 글자 뒤에 오면 둘을 한 폰트로 그리려다 네모로 깨진다.
    사이에 보이지 않는 글자(U+2060)를 끼워 따로 그리게 한다. */
+// 이모지 모양 선택 문자(︎ ️, 눈에 안 보이는 글자)는 일부 글꼴에서 네모로 찍히므로 지운다.
 // 반각 탁점·반탁점(ﾞﾟ)이 앞 글자에 붙어 버리지 않게 단어 잇기 문자를 넣는다. 그 밖의 글자는 그대로 둔다.
 function msKao(s) {
-  return String(s == null ? "" : s).replace(/[\uFF9E\uFF9F]/g, "\u2060$&");
+  return String(s == null ? "" : s)
+    .replace(/[\uFE00-\uFE0F]/g, "")
+    .replace(/[\uFF9E\uFF9F]/g, "\u2060$&");
 }
 
 function msWeather(w) {
@@ -658,6 +661,7 @@ const MS_CSS = `
 .ms-tail{position:absolute;left:50%;bottom:-8px;margin-left:-5px}
 .ms-ntag{position:absolute;z-index:2;display:flex;justify-content:center}
 .ms-ntag span{${MS_F.navy}padding:0 8px;color:#fff;font-size:12.5px;font-weight:900;white-space:nowrap;line-height:1.5}
+.ms-nkao{font-style:normal;font-weight:500;font-family:${MS_KAO_FONT}}
 .ms-tray{position:absolute;left:6px;right:6px;bottom:6px;z-index:3;${MS_F.orange}padding:4px;background:${MS_CHECK};background-clip:padding-box}
 .ms-tray-in{background:${MS_CHECK};padding:9px;display:grid;gap:8px;position:relative;align-items:stretch}
 .ms-fl{position:absolute}
