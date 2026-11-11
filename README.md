@@ -8,13 +8,15 @@
 
 | 캐릭터 | 메인 프롬프트 | 첫인사 | 붙여넣기 안내 | 그 밖 |
 |---|---|---|---|---|
-| 마유마로 | [v9.3](mayumaro/261111%20prompt%20v9.3) (상태창 없는 본은 [v9.3 상태창 없음](mayumaro/261111%20prompt%20v9.3%20상태창%20없음)) | [v6](mayumaro/261109%20intro%20v6) | [261111 유저 노트·수정안](mayumaro/261111%20유저노트·수정안.md) · [261110 전/후 비교](mayumaro/261110%20변경%20전후%20비교.md) · [통째 교체본](mayumaro/261110%20통째%20교체본.txt) · [v9 관계와 마음](mayumaro/261110%20v9%20관계와%20마음.md) · [v8.3 수정안](mayumaro/261110%20v8.3%20수정안.md) · [v8 무드](mayumaro/261109%20v8%20무드.md) · [v7 명령어·NSFW](mayumaro/261109%20v7%20명령어·NSFW.md) | 컴포넌트 JSX 7개 (`mayumaro/*.jsx`) |
+| 마유마로 | [v9.4](mayumaro/261111%20prompt%20v9.4) (상태창 없는 본은 [v9.4 상태창 없음](mayumaro/261111%20prompt%20v9.4%20상태창%20없음)) | [v6](mayumaro/261109%20intro%20v6) | [261111 유저 노트·수정안](mayumaro/261111%20유저노트·수정안.md) · [261110 전/후 비교](mayumaro/261110%20변경%20전후%20비교.md) · [통째 교체본](mayumaro/261110%20통째%20교체본.txt) · [v9 관계와 마음](mayumaro/261110%20v9%20관계와%20마음.md) · [v8.3 수정안](mayumaro/261110%20v8.3%20수정안.md) · [v8 무드](mayumaro/261109%20v8%20무드.md) · [v7 명령어·NSFW](mayumaro/261109%20v7%20명령어·NSFW.md) | 컴포넌트 JSX 7개 (`mayumaro/*.jsx`) |
 | 오손 캘러핸 | [v5](callahan/261105%20prompt%20v5) | — | [v5 변경](callahan/261105%20v5%20변경.md) · [보강](callahan/261105%20보강.md) · [상태창 v0.4](callahan/261107%20상태창%20v0.4.md) · [명령어 위젯](callahan/261109%20명령어%20위젯.md) · [혼잣말 위젯](callahan/261109%20혼잣말%20위젯.md) | 로어북 · 상태창 · 위젯 · 소개 · 에셋 템플릿 · 컴포넌트 [Orsonstatus](callahan/Orsonstatus.jsx) · [OrsonPod](callahan/OrsonPod.jsx) · [OrsonHistory](callahan/OrsonHistory.jsx) · [OrsonTape](callahan/OrsonTape.jsx) |
 | 요현 | [v3](yohyeon/261107%20prompt%20v3) | [intro](yohyeon/intro.md) | [보강 세트](yohyeon/261107%20보강%20세트.md) | [세계관](yohyeon/worldview.md) |
 
 ## 기록 (최신순)
 
-- [mayumaro/261111 유저 노트·수정안](mayumaro/261111%20유저노트·수정안.md) · 마유마로 v9.3(유니챗 반영본 동기화 + 외양 줄: 대신 쓸 때 꾸밈말 금지), 추천 유저 노트 [선호하는 글](NSFW 시선·리듬 보강), 선택 블록 [NSFW 신음 번역] **최신**
+- [mayumaro/261111 prompt v9.4](mayumaro/261111%20prompt%20v9.4) · 마유마로 v9.4: '반드시 지켜야 하는 이유' 칸만 영어로 번역(고유 용어는 한국어 유지, 결과 자리에 →). 이 칸 979→630토큰(GPT 기준). 바뀐 뜻: '다음 응답'→'this reply', '키스나 그 이상'→'A kiss or actual sex', 세 박자에 (## 진행) 표시. 상태창 없는 본도 같이 **최신**
+
+- [mayumaro/261111 유저 노트·수정안](mayumaro/261111%20유저노트·수정안.md) · 마유마로 v9.3(유니챗 반영본 동기화 + 외양 줄: 대신 쓸 때 꾸밈말 금지), 추천 유저 노트 [선호하는 글](NSFW 시선·리듬 보강), 선택 블록 [NSFW 신음 번역]
 
 - [mayumaro/261110 v9 관계와 마음](mayumaro/261110%20v9%20관계와%20마음.md) · 마유마로 v9: 마음은 단계보다 느리게(1~3단계는 일의 거리, 4단계부터 행동으로 새어 나옴), 자각은 몇 주 + 결정적 사건으로만, 연인 이후 태도. 새 값 없음, 약 +275토큰
 
