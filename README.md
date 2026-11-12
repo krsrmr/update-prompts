@@ -8,13 +8,13 @@
 
 | 캐릭터 | 메인 프롬프트 | 첫인사 | 붙여넣기 안내 | 그 밖 |
 |---|---|---|---|---|
-| 마유마로 | 테스트빌드: [261112](mayumaro/261112%20prompt%20테스트빌드) · [v9.4](mayumaro/261111%20prompt%20v9.4) (상태창 없는 본은 [v9.4 상태창 없음](mayumaro/261111%20prompt%20v9.4%20상태창%20없음)) | [v6](mayumaro/261109%20intro%20v6) | [261111 유저 노트·수정안](mayumaro/261111%20유저노트·수정안.md) · [261110 전/후 비교](mayumaro/261110%20변경%20전후%20비교.md) · [통째 교체본](mayumaro/261110%20통째%20교체본.txt) · [v9 관계와 마음](mayumaro/261110%20v9%20관계와%20마음.md) · [v8.3 수정안](mayumaro/261110%20v8.3%20수정안.md) · [v8 무드](mayumaro/261109%20v8%20무드.md) · [v7 명령어·NSFW](mayumaro/261109%20v7%20명령어·NSFW.md) | 컴포넌트 JSX 7개 (`mayumaro/*.jsx`) |
+| 마유마로 | 테스트빌드: [261112](mayumaro/261112%20prompt%20테스트빌드) ([상태창 없음](mayumaro/261112%20prompt%20테스트빌드%20상태창%20없음)) · [v9.4](mayumaro/261111%20prompt%20v9.4) (상태창 없는 본은 [v9.4 상태창 없음](mayumaro/261111%20prompt%20v9.4%20상태창%20없음)) | [v6](mayumaro/261109%20intro%20v6) | [261111 유저 노트·수정안](mayumaro/261111%20유저노트·수정안.md) · [261110 전/후 비교](mayumaro/261110%20변경%20전후%20비교.md) · [통째 교체본](mayumaro/261110%20통째%20교체본.txt) · [v9 관계와 마음](mayumaro/261110%20v9%20관계와%20마음.md) · [v8.3 수정안](mayumaro/261110%20v8.3%20수정안.md) · [v8 무드](mayumaro/261109%20v8%20무드.md) · [v7 명령어·NSFW](mayumaro/261109%20v7%20명령어·NSFW.md) | 컴포넌트 JSX 7개 (`mayumaro/*.jsx`) |
 | 오손 캘러핸 | [v5](callahan/261105%20prompt%20v5) | — | [v5 변경](callahan/261105%20v5%20변경.md) · [보강](callahan/261105%20보강.md) · [상태창 v0.4](callahan/261107%20상태창%20v0.4.md) · [명령어 위젯](callahan/261109%20명령어%20위젯.md) · [혼잣말 위젯](callahan/261109%20혼잣말%20위젯.md) | 로어북 · 상태창 · 위젯 · 소개 · 에셋 템플릿 · 컴포넌트 [Orsonstatus](callahan/Orsonstatus.jsx) · [OrsonPod](callahan/OrsonPod.jsx) · [OrsonHistory](callahan/OrsonHistory.jsx) · [OrsonTape](callahan/OrsonTape.jsx) |
 | 요현 | [v3](yohyeon/261107%20prompt%20v3) | [intro](yohyeon/intro.md) | [보강 세트](yohyeon/261107%20보강%20세트.md) | [세계관](yohyeon/worldview.md) |
 
 ## 기록 (최신순)
 
-- [mayumaro/261112 업데이트](mayumaro/261112%20업데이트.md) · 마유마로: ① 취재 NSFW에서 '자료니까'로 돌아오기, `researchCount`가 쌓일수록 무너지기 쉬워짐 ② [성격] 감정의 결 ③ [만화가로서] 마감 주기 텐션 ④ 이유 칸 엔진 줄(이유가 원고에서 {{user}} 쪽으로 옮겨 감, 자료 부탁은 수 중 하나) ⑤ `## 진행` 다음 수 줄(하던 일 안의 수 / 새 수, 콘티 노트·'성적인 쪽' 문장 삭제) ⑥ 외양 줄(11/11). 전부 반영한 통째 교체본 [261112 prompt 테스트빌드](mayumaro/261112%20prompt%20테스트빌드) **최신**
+- [mayumaro/261112 업데이트](mayumaro/261112%20업데이트.md) · 마유마로: ① 취재 NSFW에서 '자료니까'로 돌아오기, `researchCount`가 쌓일수록 무너지기 쉬워짐 ② [성격] 감정의 결 ③ [만화가로서] 마감 주기 텐션 ④ 이유 칸 엔진 줄(이유가 원고에서 {{user}} 쪽으로 옮겨 감, 자료 부탁은 수 중 하나) ⑤ `## 진행` 다음 수 줄(하던 일 안의 수 / 새 수, 콘티 노트·'성적인 쪽' 문장 삭제) ⑥ 외양 줄(11/11). 전부 반영한 통째 교체본 [261112 prompt 테스트빌드](mayumaro/261112%20prompt%20테스트빌드) · [상태창 없음](mayumaro/261112%20prompt%20테스트빌드%20상태창%20없음) **최신**
 
 - [mayumaro/261111 prompt v9.4](mayumaro/261111%20prompt%20v9.4) · 마유마로 v9.4: '반드시 지켜야 하는 이유' 칸만 영어로 번역(고유 용어는 한국어 유지, 결과 자리에 →). 이 칸 979→630토큰(GPT 기준). 바뀐 뜻: '다음 응답'→'this reply', '키스나 그 이상'→'A kiss or actual sex', 세 박자에 (## 진행) 표시. 상태창 없는 본도 같이
 
