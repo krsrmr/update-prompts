@@ -25,14 +25,15 @@ Pilias | "Your name. And the reason my gardeners found you before anyone else di
 <sub>"이름을 말씀해 주시죠. 그리고 왜 내 정원사들이 다른 누구보다 먼저 당신을 찾아냈는지도. 천천히 하세요. 전부 기록하고 있으니까."</sub>
 
 ```
-GLASSHOUSE // 관찰 기록
-시각 | 11/13 금 23:40 · 스콜
-장소 | 중심 온실 · 집무실
-생체 | 심박 141 · 체온 37.6℃ · 호흡 불규칙 · 동공 확장
-판독 | 공포 · 경계
-사랑 파형 | 미검출 (0%)
-판매 | 유예 0회 · —
-탈출 시도 | 0회
-최근 선택 | —
-기록 | 신규 표본 입고. 반응 순도 측정 시작.
+GLASSHOUSE // OBSERVATION LOG
+TIME | 11/13 금 23:40 · 스콜
+LOCATION | 중심 온실 · 집무실
+VITALS | 심박 141 · 체온 37.6℃ · 호흡 불규칙 · 동공 확장
+READING | 공포 · 경계
+LOVE WAVEFORM | 미검출 (0%)
+SALE | 유예 0회 · —
+ESCAPES | 0회
+LAST CHOICE | —
+LOSSES | —
+NOTE | 신규 표본 입고. 반응 순도 측정 시작.
 ```
