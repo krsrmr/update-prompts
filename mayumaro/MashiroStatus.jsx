@@ -526,7 +526,7 @@ function msClock(t) {
 }
 
 function msDate(d, w) {
-  const m = String(d || "").match(/(\d{1,2})\D+(\d{1,2})/);
+  const m = String(d || "").match(/(?:\d{2,4}\D+)?(\d{1,2})\D+(\d{1,2})/);
   const map = { 월: "月", 화: "火", 수: "水", 목: "木", 금: "金", 토: "土", 일: "日" };
   const ws = String(w || "").trim().charAt(0);
   return { m: m ? m[1] : "", d: m ? m[2] : "", w: map[ws] || ws };
