@@ -1,17 +1,21 @@
 // 필요 훅: useState, useEffect (react)
 // 통화 화면. 마시로와 {{user}}가 떨어져서 통화가 연결되는 순간 한 번 뜬다. 대화는 본문에서 평소 형식으로 이어진다.
-//   video={true}  : {{user}}가 건 영상통화. doing(마시로가 하던 일)에서 상황 그림을 찾아 띄운다.
-//                   그림은 '카메라 꺼짐' 화면 위에 덮어 그린다. 그림이 없으면 밑의 '카메라 꺼짐' 화면이 그대로 보인다.
 //   video={false} : 음성통화. 프로필과 통화 시간이 뜬다.
-//   doing : 마시로가 하던 일, 짧은 한국어. 예) "침대에서 뒹굴던 중", "원고 작업 중"
-//   clock : 연결된 시각. name : 마시로의 LIME 이름(기본 真白)
-// 상황 그림은 MC_URL 폴더의 vc-상황.webp (예: vc-bed.webp). 그림을 올리면 코드는 안 고쳐도 된다.
-// 상황 이름과 그 말을 찾는 낱말은 맨 아래 MC_SCENES 표에 있다(위에 있는 것부터 먼저 찾는다).
+//   video={true}  : {{user}}가 건 영상통화. 그림을 세 겹으로 겹쳐 그린다(위가 있으면 위가 보인다).
+//       맨 위  특별 그림  vc-상황.webp            doing에서 MC_SCENES 낱말을 찾았을 때만
+//       가운데 기본 그림  vc-세트-표정.webp        place·look·face로 정함 (세트 4 × 표정 5 = 20장)
+//       맨 아래 카메라 꺼짐 화면                    그림이 하나도 없을 때의 안전망
+//   place : home(집, 티셔츠) / school(학교, 후드티) / out(외출, 흐린 배경)
+//   look  : out일 때만. hoodie(후드티, 기본) / dressed(사복) → 세트 out / out-dressed
+//   face  : fluster(당황, 기본) / shy(수줍) / teary(울먹) / serious(진지) / happy(반가움)
+//   doing : 마시로가 하던 일, 짧은 한국어. clock : 연결된 시각. name : LIME 이름(기본 真白)
+// 그림은 MC_URL 폴더에 올리면 코드를 고치지 않아도 바로 뜬다.
 
 function MashiroCall(props = {}) {
-  const { video = false, doing = "", clock = "23:41", name = "真白" } = props;
+  const { video = false, place = "home", look = "hoodie", face = "fluster", doing = "", clock = "23:41", name = "真白" } = props;
   const isVideo = video === true || String(video) === "true";
   const scene = isVideo ? mcScene(doing) : "";
+  const base = isVideo ? mcBase(place, look, face) : "";
   const [sec, setSec] = useState(0);
 
   useEffect(() => {
@@ -34,8 +38,9 @@ function MashiroCall(props = {}) {
               <span style={{ fontSize: 13, fontWeight: 700 }}>カメラがオフになっています</span>
               <span style={{ fontSize: 11.5, opacity: 0.7 }}>상대가 카메라를 가리고 있어요</span>
             </div>
+            <div className="mc-feed" role="img" aria-label={String(doing || "영상통화 화면")} style={{ position: "absolute", inset: 0, backgroundImage: 'url("' + MC_URL + "vc-" + base + '.webp")', backgroundSize: "cover", backgroundPosition: "center" }} />
             {scene ? (
-              <div className="mc-feed" role="img" aria-label={String(doing || "영상통화 화면")} style={{ position: "absolute", inset: 0, backgroundImage: 'url("' + MC_URL + "vc-" + scene + '.webp")', backgroundSize: "cover", backgroundPosition: "center" }} />
+              <div className="mc-feed" aria-hidden="true" style={{ position: "absolute", inset: 0, backgroundImage: 'url("' + MC_URL + "vc-" + scene + '.webp")', backgroundSize: "cover", backgroundPosition: "center" }} />
             ) : null}
           </>
         ) : (
@@ -89,34 +94,27 @@ function MashiroCall(props = {}) {
 
 const MC_URL = "https://mayumaro.vercel.app/img/photo/";
 
-/* 상황 이름 ← doing에서 찾을 낱말. 위에서부터 먼저 맞는 것을 쓴다. 영어 상황 이름을 그대로 써도 된다. */
+/* 특별 그림: 상황 이름 ← doing에서 찾을 낱말. 위에서부터 먼저 맞는 것을 쓴다.
+   흔한 낱말(밥, 작업, 침대 등)은 넣지 않는다. 평범한 장면은 기본 그림이 맡는다. */
 const MC_SCENES = [
-  ["deadline", ["마감"]],
-  ["sick", ["감기", "아파", "아픈", "열이", "몸살"]],
-  ["nap", ["엎드려", "책상에서 잠", "꾸벅", "졸"]],
-  ["wakeup", ["자다", "깼", "깨어", "일어나", "늦잠", "잠결"]],
-  ["bath", ["씻", "샤워", "목욕", "욕실", "머리 말리"]],
-  ["stash", ["상자", "택배", "자료 정리"]],
-  ["hide", ["숨기", "자료를 덮", "자료 보"]],
-  ["pose", ["거울", "포즈", "크로키"]],
-  ["work", ["원고", "작업", "그리", "펜", "작화", "콘티", "태블릿"]],
-  ["cook", ["요리", "부엌", "냄비", "앞치마"]],
-  ["eat", ["먹", "밥", "식사", "야식", "도시락"]],
-  ["kotatsu", ["코타츠", "귤"]],
-  ["workout", ["운동", "홈트", "스트레칭", "팔굽혀"]],
-  ["plush", ["언박싱", "새 인형", "인형 정리"]],
-  ["bed", ["침대", "뒹굴", "이불", "누워", "베개"]],
-  ["campus", ["학교", "강의", "복도", "캠퍼스", "수업", "도서관"]],
+  ["sick", ["감기", "몸살", "열이 나", "아파서", "앓"]],
+  ["wakeup", ["자다", "잠결", "늦잠", "졸다", "엎드려", "막 일어"]],
+  ["bath", ["씻고", "샤워", "목욕", "욕실", "머리 말리"]],
+  ["festival", ["축제", "마츠리", "유카타", "불꽃놀이"]],
+  ["newyear", ["참배", "하츠모데", "신사", "새해"]],
+  ["kotatsu", ["코타츠", "귤 까"]],
+  ["dressup", ["꾸민 옷", "옷 고르", "약속 준비", "외출 준비"]],
+  ["pose", ["포즈", "거울 앞", "자기 손"]],
+  ["hide", ["숨기", "자료를 덮", "자료 상자", "황급히 치우"]],
+  ["deadline", ["마감 지옥", "밤샘", "철야", "에너지 드링크"]],
+  ["cook", ["요리", "앞치마", "냄비", "볶", "끓이"]],
+  ["eat", ["야식", "밥 한가득", "먹방", "폭식", "한 입 가득"]],
+  ["workout", ["운동", "홈트", "스트레칭", "팔굽혀", "윗몸"]],
+  ["plush", ["언박싱", "새 인형", "인형 택배"]],
   ["studio", ["공방", "도예", "물레", "점토", "가마"]],
-  ["train", ["전철", "지하철", "기차", "역에서", "긴테쓰"]],
-  ["cafe", ["카페", "찻집"]],
-  ["rain", ["우산", "처마", "비를"]],
-  ["crane", ["뽑기", "게임센터", "오락실", "크레인"]],
-  ["art", ["화방", "문구", "펜촉"]],
-  ["festival", ["축제", "마츠리", "유카타", "불꽃"]],
-  ["newyear", ["참배", "신사", "새해", "하츠모데"]],
-  ["dressup", ["꾸미", "옷 고르", "약속 준비", "외출 준비"]],
-  ["night", ["편의점", "밤길", "산책", "귀갓길"]]
+  ["rain", ["처마", "비를 피", "우산이 없", "우산 없이"]],
+  ["crane", ["인형 뽑기", "뽑기", "게임센터", "오락실", "크레인"]],
+  ["art", ["화방", "펜촉", "화구"]]
 ];
 
 function mcScene(doing) {
@@ -129,6 +127,26 @@ function mcScene(doing) {
     for (let k = 0; k < words.length; k++) if (t.indexOf(words[k]) >= 0) return MC_SCENES[i][0];
   }
   return "";
+}
+
+/* 기본 그림: 세트(home / school / out / out-dressed) + 표정. 한국어로 써도 알아듣는다. */
+const MC_FACES = { fluster: ["당황", "허둥"], shy: ["수줍", "부끄"], teary: ["울먹", "눈물", "울"], serious: ["진지", "침착"], happy: ["반가", "웃", "기쁨"] };
+
+function mcBase(place, look, face) {
+  const pl = String(place || "").toLowerCase();
+  const lk = String(look || "").toLowerCase();
+  let set = "home";
+  if (pl.indexOf("school") >= 0 || pl.indexOf("campus") >= 0 || pl.indexOf("학교") >= 0) set = "school";
+  else if (pl.indexOf("out") >= 0 || pl.indexOf("외출") >= 0 || pl.indexOf("밖") >= 0) set = (lk.indexOf("dress") >= 0 || lk.indexOf("사복") >= 0 || lk.indexOf("꾸민") >= 0) ? "out-dressed" : "out";
+  const fc = String(face || "").toLowerCase();
+  let f = "fluster";
+  if (MC_FACES[fc]) f = fc;
+  else {
+    for (const key in MC_FACES) {
+      if (MC_FACES[key].some((w) => fc.indexOf(w) >= 0)) { f = key; break; }
+    }
+  }
+  return set + "-" + f;
 }
 
 /* ───────── 보조 요소 ───────── */
