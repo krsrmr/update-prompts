@@ -9,6 +9,9 @@
 // {{user}}의 메시지 뒤에 마시로 칸이 하나라도 있으면 그 메시지에 '既読'(읽음)가 붙는다.
 // typing={true}: 맨 아래에 마시로가 입력 중인 점 세 개를 띄운다.
 // 상단 '번역' 단추는 양쪽 번역(마시로 쪽 한국어, {{user}} 쪽 일본어)을 함께 숨기고 보인다.
+// 숨은 기능(AI는 모름): 전송 취소 칸 일부가 '사진 전송 취소'로 바뀐다. 누르면 마시로가 보냈다 지운 셀카가 열린다.
+//   사진은 LC_SELFIE_URL 폴더의 selfie-1.webp, selfie-2.webp … 장수는 LC_SELFIE_COUNT, 빈도는 LC_SELFIE_EVERY(취소 몇 번에 한 번).
+//   장수가 0이면 지금처럼 글자 취소로 나온다. 장수는 실제로 올린 사진 수와 맞춰 둔다.
 
 function LimeChat(props = {}) {
   const {
@@ -25,6 +28,7 @@ function LimeChat(props = {}) {
   } = props;
 
   const [hideKo, setHideKo] = useState(false);
+  const [peek, setPeek] = useState(-1);
   const c = LC_COLORS;
 
   // 칸 뒤쪽 값은 순서가 틀려도 받는다: 시각처럼 생긴 값(23:41)은 시간, 나머지는 번역·스티커 이름으로 쓴다.
@@ -46,7 +50,7 @@ function LimeChat(props = {}) {
   return (
     <div style={{ width: "100%", maxWidth: 360, margin: "10px auto", fontFamily: LC_FONT, color: c.ink }}>
       <style>{LC_CSS}</style>
-      <div className="lc-win" style={{ borderRadius: 18, overflow: "hidden", background: c.bg, boxShadow: "0 10px 28px -14px rgba(30,50,80,.55)", border: "1px solid " + c.frame }}>
+      <div className="lc-win" style={{ position: "relative", minHeight: peek >= 0 ? 460 : undefined, borderRadius: 18, overflow: "hidden", background: c.bg, boxShadow: "0 10px 28px -14px rgba(30,50,80,.55)", border: "1px solid " + c.frame }}>
         {/* 상단바 */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: c.bar, color: "#fff" }}>
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -74,6 +78,25 @@ function LimeChat(props = {}) {
               );
             }
             if (r.kind === "del") {
+              const pic = lcSelfie(r.time, i);
+              if (pic) {
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className="lc-in lc-pdel"
+                    onClick={() => setPeek(i)}
+                    aria-label="취소된 사진 보기"
+                    style={Object.assign({ alignSelf: "center", textAlign: "center", fontSize: 11, color: "#fff", background: c.chip, borderRadius: 10, padding: "3px 10px", lineHeight: 1.45, border: 0, cursor: "pointer", fontFamily: "inherit" }, delay)}
+                  >
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <LcCam />
+                      {String(name)}が写真の送信を取り消しました
+                    </span>
+                    {hideKo ? null : <div style={{ opacity: 0.85 }}>{String(name)} 님이 사진 전송을 취소했습니다</div>}
+                  </button>
+                );
+              }
               return (
                 <div key={i} className="lc-in" style={Object.assign({ alignSelf: "center", textAlign: "center", fontSize: 11, color: "#fff", background: c.chip, borderRadius: 10, padding: "3px 10px", lineHeight: 1.45 }, delay)}>
                   {String(name)}が送信を取り消しました
@@ -136,6 +159,21 @@ function LimeChat(props = {}) {
           ) : null}
         </div>
 
+        {/* 취소된 사진 보기 */}
+        {peek >= 0 && rows[peek] && lcSelfie(rows[peek].time, peek) ? (
+          <button
+            type="button"
+            className="lc-view"
+            onClick={() => setPeek(-1)}
+            aria-label="사진 닫기"
+            style={{ position: "absolute", inset: 0, zIndex: 5, border: 0, padding: 16, margin: 0, cursor: "pointer", background: "rgba(14,18,26,.86)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, fontFamily: "inherit" }}
+          >
+            <span className="lc-photo" role="img" aria-label="마시로가 보냈다가 취소한 사진" style={{ display: "block", width: "78%", aspectRatio: "3 / 4", borderRadius: 10, boxShadow: "0 10px 30px rgba(0,0,0,.5)", backgroundColor: "#2a2f3d", backgroundImage: 'url("' + lcSelfie(rows[peek].time, peek) + '")', backgroundSize: "cover", backgroundPosition: "center" }} />
+            <span style={{ color: "#fff", fontSize: 11.5, opacity: 0.85 }}>{String(rows[peek].time || "")} · 取り消された写真</span>
+            <span style={{ color: "#fff", fontSize: 10.5, opacity: 0.6 }}>눌러서 닫기</span>
+          </button>
+        ) : null}
+
         {/* 입력줄 */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "#fff", borderTop: "1px solid " + c.line }}>
           <span style={{ fontSize: 18, color: c.meta, lineHeight: 1 }}>＋</span>
@@ -173,8 +211,14 @@ const LC_CSS = `
 .lc-b { position: relative; border-radius: 16px; padding: 7px 11px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; box-shadow: 0 1px 1px rgba(0,0,0,.06); }
 .lc-me { border-top-right-radius: 4px; }
 .lc-ma { border-top-left-radius: 4px; }
+.lc-pdel { box-shadow: 0 0 0 0 rgba(255,255,255,.0); }
+.lc-pdel:hover, .lc-pdel:focus-visible { background: rgba(60,80,110,.55) !important; outline: none; }
+@keyframes lc-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lc-zoom { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+.lc-view { animation: lc-fade .2s ease-out both; }
+.lc-photo { animation: lc-zoom .25s ease-out both; }
 .lc-dot { display: inline-block; width: 6px; height: 6px; margin: 0 2px; border-radius: 50%; background: #8a94a0; animation: lc-blink 1s infinite; }
-@media (prefers-reduced-motion: reduce) { .lc-in, .lc-dot { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .lc-in, .lc-dot, .lc-view, .lc-photo { animation: none; } }
 `;
 
 /* 마시로의 LIME 프로필 사진: 동글동글한 오리지널 토끼 인형 */
@@ -201,4 +245,30 @@ function lcSplit(fields) {
   const time = list.find(isTime) || "";
   const other = list.find((v) => !isTime(v)) || "";
   return { time, other };
+}
+
+/* ── 취소된 셀카 설정 ── 사진을 올리면 장수만 고친다. */
+const LC_SELFIE_URL = "https://mayumaro.vercel.app/img/photo/";
+const LC_SELFIE_COUNT = 0; // selfie-1.webp ~ selfie-N.webp 장수
+const LC_SELFIE_EVERY = 4; // 전송 취소 몇 번에 한 번꼴로 사진으로 바꿀지 (클수록 드묾)
+
+/* 전송 취소 칸이 사진 칸인지 정하고, 그렇다면 사진 주소를 돌려준다. 시간과 순서로 정해서, 다시 열어도 같다. */
+function lcSelfie(time, i) {
+  if (!(LC_SELFIE_COUNT > 0)) return "";
+  const m = /(\d{1,2})[:：](\d{2})/.exec(String(time || ""));
+  const mins = m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+  const key = mins * 7 + i * 13;
+  if (key % Math.max(1, LC_SELFIE_EVERY) !== 0) return "";
+  const n = (Math.floor(key / Math.max(1, LC_SELFIE_EVERY)) % LC_SELFIE_COUNT) + 1;
+  return LC_SELFIE_URL + "selfie-" + n + ".webp";
+}
+
+/* 사진 취소 칸의 작은 카메라 아이콘 */
+function LcCam() {
+  return (
+    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" style={{ display: "block", flex: "none" }}>
+      <path d="M2 5h2.5l1.2-1.6h4.6L11.5 5H14v7.5H2z" fill="none" stroke="#fff" strokeWidth="1.3" strokeLinejoin="round" />
+      <circle cx="8" cy="8.6" r="2.2" fill="none" stroke="#fff" strokeWidth="1.3" />
+    </svg>
+  );
 }

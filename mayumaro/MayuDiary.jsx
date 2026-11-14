@@ -3,6 +3,9 @@
 // 마시로는 {{user}}가 이 화면을 본 사실을 모른다.
 // posts 한 줄 = 글 하나, 최신 글이 위: "시간|日本語|한국어|좋아요"  예) "3分|…|…|4"
 // 시간은 "3分", "2時間", "昨日", "11月3日"처럼. 좋아요는 1~99.
+// 사진: 글 끝에 "|food"·"|doll"·"|desk"·"|outside"를 붙이면 그 글에 사진이 붙을 수 있다.
+//   한 화면에 사진은 최대 1장(사진 종류가 붙은 첫 글만), 그마저도 MD_PHOTO_EVERY번에 한 번꼴로만 뜬다.
+//   사진은 MD_PHOTO_URL 폴더의 diary-food-1.webp … 종류별 장수는 MD_PHOTO_COUNT(실제로 올린 수와 맞춘다). 장수가 0이면 글만 나온다.
 
 function MayuDiary(props = {}) {
   const {
@@ -21,8 +24,11 @@ function MayuDiary(props = {}) {
   const c = MD_COLORS;
   const list = (Array.isArray(posts) ? posts : []).filter(Boolean).map((line) => {
     const p = String(line).split("|");
-    return { time: p[0] || "", ja: p[1] || "", ko: p[2] || "", likes: mdNum(p[3]) };
+    return { time: p[0] || "", ja: p[1] || "", ko: p[2] || "", likes: mdNum(p[3]), kind: String(p[4] || "").trim().toLowerCase() };
   });
+  // 사진이 붙을 글: 사진 종류가 붙은 첫 글 하나
+  const picAt = list.findIndex((x) => (MD_PHOTO_COUNT[x.kind] || 0) > 0);
+  const picSrc = picAt >= 0 ? mdPhoto(list[picAt]) : "";
 
   return (
     <div style={{ width: "100%", maxWidth: 340, margin: "8px auto", fontFamily: MD_FONT, padding: "8px 8px 18px", overflow: "hidden" }}>
@@ -88,6 +94,14 @@ function MayuDiary(props = {}) {
                 {p.ko && !hideKo ? (
                   <p lang="ko" style={{ margin: "5px 0 0", padding: "5px 8px", background: "#f4f5f7", borderRadius: 8, fontSize: 13, lineHeight: 1.55, color: c.sub, whiteSpace: "pre-wrap", wordBreak: "keep-all" }}>{p.ko}</p>
                 ) : null}
+                {i === picAt && picSrc ? (
+                  <span
+                    className="md-pic"
+                    role="img"
+                    aria-label="첨부 사진"
+                    style={{ display: "block", width: "100%", aspectRatio: "4 / 3", marginTop: 8, borderRadius: 14, border: "1px solid " + c.line, backgroundColor: "#f1f3f5", backgroundImage: 'url("' + picSrc + '")', backgroundSize: "cover", backgroundPosition: "center" }}
+                  />
+                ) : null}
                 <div style={{ display: "flex", gap: 22, marginTop: 7, fontSize: 12.5, color: c.muted }}>
                   <MdIcon d={MD_ICON.reply} color={c.muted} />
                   <span title="비공개 계정의 글은 리포스트할 수 없어요"><MdIcon d={MD_ICON.repost} color={c.faint} /></span>
@@ -124,7 +138,8 @@ const MD_CSS = `
 .md-phone { animation: md-rise .6s cubic-bezier(.2,.9,.25,1) both; }
 .md-post { animation: md-fade .4s ease-out both; }
 .md-peek { animation: md-blink 2.4s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .md-phone, .md-post, .md-peek { animation: none; } }
+.md-pic { animation: md-fade .5s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .md-phone, .md-post, .md-peek, .md-pic { animation: none; } }
 `;
 
 const MD_FONT =
@@ -201,4 +216,20 @@ function MdStatusIcons({ color }) {
       </svg>
     </span>
   );
+}
+
+/* ── 사진 설정 ── 사진을 올리면 종류별 장수만 고친다. */
+const MD_PHOTO_URL = "https://mayumaro.vercel.app/img/photo/";
+const MD_PHOTO_COUNT = { food: 0, doll: 0, desk: 0, outside: 0 }; // diary-종류-1.webp ~ diary-종류-N.webp
+const MD_PHOTO_EVERY = 2; // 비계를 몇 번 열 때 한 번꼴로 사진을 붙일지 (클수록 드묾)
+
+/* 글 내용으로 사진을 정한다. 같은 글은 늘 같은 사진, 글이 다르면 차례가 돌아간다. 안 띄울 차례면 "" */
+function mdPhoto(post) {
+  const n = MD_PHOTO_COUNT[post.kind] || 0;
+  if (!(n > 0)) return "";
+  const text = String(post.ja || "") + String(post.time || "");
+  let h = 0;
+  for (let k = 0; k < text.length; k++) h = (h * 31 + text.charCodeAt(k)) % 100003;
+  if (h % Math.max(1, MD_PHOTO_EVERY) !== 0) return "";
+  return MD_PHOTO_URL + "diary-" + post.kind + "-" + ((Math.floor(h / Math.max(1, MD_PHOTO_EVERY)) % n) + 1) + ".webp";
 }
