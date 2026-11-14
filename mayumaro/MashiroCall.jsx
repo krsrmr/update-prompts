@@ -10,12 +10,17 @@
 //   face  : fluster(당황, 기본) / shy(수줍) / teary(울먹) / serious(진지) / happy(반가움)
 //   doing : 마시로가 하던 일, 짧은 한국어. clock : 연결된 시각. name : LIME 이름(기본 真白)
 // 그림은 MC_URL 폴더에 올리면 코드를 고치지 않아도 바로 뜬다.
+// 선택 칸(위젯 규칙에는 없음, 유저가 유저 노트로 쓰게 하는 칸):
+//   you     : 오른쪽 아래 내 화면에 띄울 {{user}} 사진 주소. {face}를 넣으면 그 자리에 youFace 단어가 들어간다.
+//             예) you="https://…/me-{face}.webp" → me-shy.webp. 비어 있으면 YOU 상자가 뜬다.
+//   youFace : {{user}}의 표정. face와 같은 다섯 단어(한국어도 됨). 없으면 fluster.
 
 function MashiroCall(props = {}) {
-  const { video = false, place = "home", look = "hoodie", face = "fluster", doing = "", clock = "23:41", name = "真白" } = props;
+  const { video = false, place = "home", look = "hoodie", face = "fluster", doing = "", clock = "23:41", name = "真白", you = "", youFace = "" } = props;
   const isVideo = video === true || String(video) === "true";
   const scene = isVideo ? mcScene(doing) : "";
   const base = isVideo ? mcBase(place, look, face) : "";
+  const youSrc = isVideo ? mcYou(you, youFace) : "";
   const [sec, setSec] = useState(0);
 
   useEffect(() => {
@@ -33,7 +38,7 @@ function MashiroCall(props = {}) {
         {/* 화면: 영상통화는 '카메라 꺼짐' 위에 상황 그림을 덮는다(그림이 없으면 밑이 보임) */}
         {mode === "video" ? (
           <>
-            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 50% 42%, #2a2f3d, #12151c 70%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#d9dce4" }}>
+            <div style={{ position: "absolute", inset: 0, paddingBottom: "34%", textAlign: "center", background: "radial-gradient(circle at 50% 36%, #2a2f3d, #12151c 70%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10, color: "#d9dce4" }}>
               <McCamOff />
               <span style={{ fontSize: 13, fontWeight: 700 }}>カメラがオフになっています</span>
               <span style={{ fontSize: 11.5, opacity: 0.7 }}>상대가 카메라를 가리고 있어요</span>
@@ -69,10 +74,13 @@ function MashiroCall(props = {}) {
           </div>
         ) : null}
 
-        {/* 내 화면 (영상통화일 때) */}
+        {/* 내 화면 (영상통화일 때): YOU 상자 위에 {{user}} 사진을 덮는다(없으면 YOU 상자가 보임) */}
         {mode !== "voice" ? (
-          <div style={{ position: "absolute", right: 12, bottom: 96, width: 64, height: 92, borderRadius: 12, background: "linear-gradient(160deg, #3b4152, #262a35)", border: "2px solid rgba(255,255,255,.75)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,.75)", fontSize: 11, fontWeight: 700, boxShadow: "0 4px 10px rgba(0,0,0,.35)" }}>
+          <div style={{ position: "absolute", right: 12, bottom: 96, width: 64, height: 92, borderRadius: 12, overflow: "hidden", background: "linear-gradient(160deg, #3b4152, #262a35)", border: "2px solid rgba(255,255,255,.75)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,.75)", fontSize: 11, fontWeight: 700, boxShadow: "0 4px 10px rgba(0,0,0,.35)" }}>
             YOU
+            {youSrc ? (
+              <span role="img" aria-label="내 화면" style={{ position: "absolute", inset: 0, backgroundImage: 'url("' + youSrc + '")', backgroundSize: "cover", backgroundPosition: "center" }} />
+            ) : null}
           </div>
         ) : null}
 
@@ -132,21 +140,29 @@ function mcScene(doing) {
 /* 기본 그림: 세트(home / school / out / out-dressed) + 표정. 한국어로 써도 알아듣는다. */
 const MC_FACES = { fluster: ["당황", "허둥"], shy: ["수줍", "부끄"], teary: ["울먹", "눈물", "울"], serious: ["진지", "침착"], happy: ["반가", "웃", "기쁨"] };
 
+function mcFace(face) {
+  const fc = String(face || "").toLowerCase();
+  if (MC_FACES[fc]) return fc;
+  for (const key in MC_FACES) {
+    if (MC_FACES[key].some((w) => fc.indexOf(w) >= 0)) return key;
+  }
+  return "fluster";
+}
+
 function mcBase(place, look, face) {
   const pl = String(place || "").toLowerCase();
   const lk = String(look || "").toLowerCase();
   let set = "home";
   if (pl.indexOf("school") >= 0 || pl.indexOf("campus") >= 0 || pl.indexOf("학교") >= 0) set = "school";
   else if (pl.indexOf("out") >= 0 || pl.indexOf("외출") >= 0 || pl.indexOf("밖") >= 0) set = (lk.indexOf("dress") >= 0 || lk.indexOf("사복") >= 0 || lk.indexOf("꾸민") >= 0) ? "out-dressed" : "out";
-  const fc = String(face || "").toLowerCase();
-  let f = "fluster";
-  if (MC_FACES[fc]) f = fc;
-  else {
-    for (const key in MC_FACES) {
-      if (MC_FACES[key].some((w) => fc.indexOf(w) >= 0)) { f = key; break; }
-    }
-  }
-  return set + "-" + f;
+  return set + "-" + mcFace(face);
+}
+
+/* {{user}} 사진 주소: http(s)로 시작할 때만 쓰고, {face} 자리에 표정 단어를 넣는다 */
+function mcYou(you, youFace) {
+  const u = String(you || "").trim();
+  if (!/^https?:\/\//i.test(u) || /["'()\s]/.test(u)) return "";
+  return u.split("{face}").join(mcFace(youFace));
 }
 
 /* ───────── 보조 요소 ───────── */
