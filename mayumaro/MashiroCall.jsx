@@ -76,7 +76,7 @@ function MashiroCall(props = {}) {
 
         {/* 내 화면 (영상통화일 때): YOU 상자 위에 {{user}} 사진을 덮는다(없으면 YOU 상자가 보임) */}
         {mode !== "voice" ? (
-          <div style={{ position: "absolute", right: 12, bottom: 96, width: 64, height: 92, borderRadius: 12, overflow: "hidden", background: "linear-gradient(160deg, #3b4152, #262a35)", border: "2px solid rgba(255,255,255,.75)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,.75)", fontSize: 11, fontWeight: 700, boxShadow: "0 4px 10px rgba(0,0,0,.35)" }}>
+          <div style={{ position: "absolute", right: "4%", bottom: "19%", width: "20%", aspectRatio: "2 / 3", borderRadius: 10, overflow: "hidden", background: "linear-gradient(160deg, #3b4152, #262a35)", border: "2px solid rgba(255,255,255,.75)", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,.75)", fontSize: 11, fontWeight: 700, boxShadow: "0 4px 10px rgba(0,0,0,.35)" }}>
             YOU
             {youSrc ? (
               <span role="img" aria-label="내 화면" style={{ position: "absolute", inset: 0, backgroundImage: 'url("' + youSrc + '")', backgroundSize: "cover", backgroundPosition: "center" }} />
