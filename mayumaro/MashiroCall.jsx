@@ -1,6 +1,6 @@
 // 필요 훅: useState, useEffect (react)
-// 통화 화면. 마시로와 {{user}}가 떨어져서 통화가 연결되는 순간 한 번 뜬다. 대화는 본문에서 평소 형식으로 이어진다.
-//   video={false} : 음성통화. 프로필과 통화 시간이 뜬다.
+// 통화 화면. 마시로와 {{user}}가 떨어져서 통화가 연결되는 자리에 한 번 뜬다. 대화는 본문의 <CallVoice />로 이어진다.
+//   video={false} : 음성통화. 가로로 긴 연결 카드: 분홍 真白(토끼) ⇄ 연두 YOU. 누가 걸었든, 어느 쪽 시점이든 맞게 양쪽을 다 보여 준다.
 //   video={true}  : {{user}}가 건 영상통화. 그림을 세 겹으로 겹쳐 그린다(위가 있으면 위가 보인다).
 //       맨 위  특별 그림  vc-상황.webp            doing에서 MC_SCENES 낱말을 찾았을 때만
 //       가운데 기본 그림  vc-세트-표정.webp        place·look·face로 정함 (세트 4 × 표정 5 = 20장)
@@ -31,6 +31,38 @@ function MashiroCall(props = {}) {
   const mode = isVideo ? "video" : "voice";
   const timer = String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0");
 
+  if (mode === "voice") {
+    return (
+      <div style={{ width: "100%", boxSizing: "border-box", padding: "22px 0", fontFamily: MC_FONT }}>
+        <style>{MC_CSS}</style>
+        <div className="mc-phone" style={{ borderRadius: 18, padding: "14px 18px 12px", background: "linear-gradient(100deg, #fdeef3 0%, #f2eff9 50%, #eef7e6 100%)", border: "1.5px solid #e4d8e6", boxShadow: "0 2px 8px rgba(80,70,100,.15)", color: "#2b2a33" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 10.5, color: "#6b6676", letterSpacing: 0.8 }}>
+            <span>LIME 音声通話</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#3b3946", letterSpacing: 0.4, fontVariantNumeric: "tabular-nums" }}>{timer}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 12px" }}>
+            <McSide label={String(name)} color="#b5486b" ring="mc-ring">
+              <McAvatar size={52} />
+            </McSide>
+            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6, marginBottom: 18 }} aria-hidden="true">
+              <span style={{ flex: 1, height: 2, background: "repeating-linear-gradient(90deg, #e07b93 0 4px, transparent 4px 8px)", opacity: 0.7 }} />
+              <span className="mc-wave" style={{ display: "flex", gap: 3, alignItems: "center", height: 20 }}>
+                {[0, 1, 2, 3, 4, 5].map((k) => (
+                  <i key={k} style={{ width: 3, height: 20, borderRadius: 2, background: k < 3 ? "#e07b93" : "#8fc25a", animationDelay: k * 0.12 + "s" }} />
+                ))}
+              </span>
+              <span style={{ flex: 1, height: 2, background: "repeating-linear-gradient(90deg, #8fc25a 0 4px, transparent 4px 8px)", opacity: 0.7 }} />
+            </div>
+            <McSide label="YOU" color="#5b8a2c" ring="mc-ring mc-ring-g">
+              <McYouAvatar size={52} />
+            </McSide>
+          </div>
+          <div style={{ textAlign: "center", fontSize: 10.5, color: "#6b6676" }}>{String(clock)} 接続</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ width: "100%", maxWidth: 320, margin: "10px auto", padding: "4px 6px 12px", fontFamily: MC_FONT }}>
       <style>{MC_CSS}</style>
@@ -58,21 +90,6 @@ function MashiroCall(props = {}) {
           {mode === "voice" ? null : <div style={{ fontSize: 15, fontWeight: 800, marginTop: 2, textShadow: "0 1px 3px rgba(0,0,0,.4)" }}>{String(name)}</div>}
           <div style={{ fontSize: 12, marginTop: 2, fontVariantNumeric: "tabular-nums", opacity: 0.9 }}>{timer}</div>
         </div>
-
-        {/* 음성통화 가운데 */}
-        {mode === "voice" ? (
-          <div style={{ position: "absolute", left: 0, right: 0, top: "24%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "#2b2a33" }}>
-            <div className="mc-ring" style={{ borderRadius: "50%", padding: 6, background: "rgba(255,255,255,.6)" }}>
-              <McAvatar size={96} />
-            </div>
-            <div style={{ fontSize: 19, fontWeight: 800 }}>{String(name)}</div>
-            <div className="mc-wave" aria-hidden="true" style={{ display: "flex", gap: 4, alignItems: "center", height: 22 }}>
-              {[0, 1, 2, 3, 4].map((k) => (
-                <i key={k} style={{ width: 4, height: 22, borderRadius: 2, background: "#e07b93", animationDelay: k * 0.13 + "s" }} />
-              ))}
-            </div>
-          </div>
-        ) : null}
 
         {/* 내 화면 (영상통화일 때): YOU 상자 위에 {{user}} 사진을 덮는다(없으면 YOU 상자가 보임) */}
         {mode !== "voice" ? (
@@ -173,11 +190,13 @@ const MC_FONT =
 const MC_CSS = `
 @keyframes mc-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes mc-on { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: none; } }
-@keyframes mc-ring { 0% { box-shadow: 0 0 0 0 rgba(224,123,147,.45); } 100% { box-shadow: 0 0 0 18px rgba(224,123,147,0); } }
+@keyframes mc-ring { 0% { box-shadow: 0 0 0 0 rgba(224,123,147,.45); } 100% { box-shadow: 0 0 0 12px rgba(224,123,147,0); } }
+@keyframes mc-ring-g { 0% { box-shadow: 0 0 0 0 rgba(143,194,90,.45); } 100% { box-shadow: 0 0 0 12px rgba(143,194,90,0); } }
 @keyframes mc-bar { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
 .mc-phone { animation: mc-rise .45s cubic-bezier(.2,.9,.25,1) both; }
 .mc-feed { animation: mc-on .7s ease-out .15s both; }
 .mc-ring { animation: mc-ring 1.6s ease-out infinite; }
+.mc-ring-g { animation-name: mc-ring-g; animation-delay: .8s; }
 .mc-wave i { display: block; transform-origin: center; animation: mc-bar .9s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .mc-phone, .mc-feed, .mc-ring, .mc-wave i { animation: none; } }
 `;
@@ -199,6 +218,27 @@ function McCamOff() {
       <rect x="6" y="15" width="24" height="18" rx="4" fill="none" stroke="#d9dce4" strokeWidth="2.4" />
       <path d="M30 21l10-5v16l-10-5" fill="none" stroke="#d9dce4" strokeWidth="2.4" strokeLinejoin="round" />
       <path d="M8 9l32 30" stroke="#e5484d" strokeWidth="2.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/* 음성통화 카드의 한쪽: 동그라미 프로필 + 이름 */
+function McSide({ label, color, ring, children }) {
+  return (
+    <div style={{ flex: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+      <span className={ring} style={{ borderRadius: "50%", padding: 4, background: "rgba(255,255,255,.75)" }}>{children}</span>
+      <span style={{ fontSize: 12, fontWeight: 800, color: color, letterSpacing: 0.3 }}>{label}</span>
+    </div>
+  );
+}
+
+/* {{user}} 쪽 기본 프로필(연두) */
+function McYouAvatar({ size }) {
+  return (
+    <svg viewBox="0 0 34 34" width={size} height={size} aria-hidden="true" style={{ display: "block", borderRadius: "50%" }}>
+      <circle cx="17" cy="17" r="17" fill="#e3f2d3" />
+      <circle cx="17" cy="13.5" r="5.5" fill="#fff" stroke="#c6dfab" />
+      <path d="M6.5 30c1.6-6 5.6-9 10.5-9s8.9 3 10.5 9" fill="#fff" stroke="#c6dfab" />
     </svg>
   );
 }
