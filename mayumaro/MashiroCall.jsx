@@ -1,7 +1,9 @@
 // 필요 훅: useState, useEffect (react)
-// 통화 화면. 마시로와 {{user}}가 떨어져서 통화가 연결되는 자리에 한 번 뜬다. 대화는 본문의 <CallVoice />로 이어진다.
-//   video={false} : 음성통화. 가로로 긴 연결 카드: 분홍 真白(토끼) ⇄ 연두 YOU. 누가 걸었든, 어느 쪽 시점이든 맞게 양쪽을 다 보여 준다.
-//   video={true}  : {{user}}가 건 영상통화. 그림을 세 겹으로 겹쳐 그린다(위가 있으면 위가 보인다).
+// 통화 화면(세로 휴대폰). 마시로와 {{user}}가 떨어져서 통화가 연결되는 자리에 한 번 뜬다. 대화는 본문의 <CallVoice />로 이어진다.
+//   from  : 건 사람. "mashiro"(기본) = 착신 화면 → 유저가 '応答'을 눌러야 연결. '拒否'를 누르면 마시로가 울먹인다(통화는 안 끊김).
+//           "user" = 발신 화면('呼び出し中…') → 잠시 뒤 저절로 연결.
+//   video={false} : 음성통화. 프로필·이름·통화 시간.
+//   video={true}  : {{user}}가 건 영상통화(바로 연결). 그림을 세 겹으로 겹쳐 그린다(위가 있으면 위가 보인다).
 //       맨 위  특별 그림  vc-상황.webp            doing에서 MC_SCENES 낱말을 찾았을 때만
 //       가운데 기본 그림  vc-세트-표정.webp        place·look·face로 정함 (세트 4 × 표정 5 = 20장)
 //       맨 아래 카메라 꺼짐 화면                    그림이 하나도 없을 때의 안전망
@@ -14,54 +16,43 @@
 //   you     : 오른쪽 아래 내 화면에 띄울 {{user}} 사진 주소. {face}를 넣으면 그 자리에 youFace 단어가 들어간다.
 //             예) you="https://…/me-{face}.webp" → me-shy.webp. 비어 있으면 YOU 상자가 뜬다.
 //   youFace : {{user}}의 표정. face와 같은 다섯 단어(한국어도 됨). 없으면 fluster.
+// 화면 상태는 저장되지 않는다. 대화를 다시 열면 착신 화면부터 다시 시작한다.
 
 function MashiroCall(props = {}) {
-  const { video = false, place = "home", look = "hoodie", face = "fluster", doing = "", clock = "23:41", name = "真白", you = "", youFace = "" } = props;
+  const { video = false, from = "mashiro", place = "home", look = "hoodie", face = "fluster", doing = "", clock = "23:41", name = "真白", you = "", youFace = "" } = props;
   const isVideo = video === true || String(video) === "true";
+  const byUser = /user|유저|you|me/i.test(String(from || ""));
   const scene = isVideo ? mcScene(doing) : "";
   const base = isVideo ? mcBase(place, look, face) : "";
   const youSrc = isVideo ? mcYou(you, youFace) : "";
+  const [stage, setStage] = useState(isVideo ? "on" : byUser ? "dial" : "ring");
   const [sec, setSec] = useState(0);
+  const [nag, setNag] = useState(0);
 
+  // 발신: 잠시 뒤 저절로 연결
   useEffect(() => {
+    if (stage !== "dial") return undefined;
+    const t = setTimeout(() => setStage("on"), 2600);
+    return () => clearTimeout(t);
+  }, [stage]);
+  // 연결된 뒤부터 통화 시간
+  useEffect(() => {
+    if (stage !== "on") return undefined;
     const t = setInterval(() => setSec((s) => s + 1), 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [stage]);
+  // 거절 누르면 잠깐 울먹
+  useEffect(() => {
+    if (!nag) return undefined;
+    const t = setTimeout(() => setNag(0), 1900);
+    return () => clearTimeout(t);
+  }, [nag]);
 
   const mode = isVideo ? "video" : "voice";
+  const on = stage === "on";
   const timer = String(Math.floor(sec / 60)).padStart(2, "0") + ":" + String(sec % 60).padStart(2, "0");
-
-  if (mode === "voice") {
-    return (
-      <div style={{ width: "100%", boxSizing: "border-box", padding: "22px 0", fontFamily: MC_FONT }}>
-        <style>{MC_CSS}</style>
-        <div className="mc-phone" style={{ borderRadius: 18, padding: "14px 18px 12px", background: "linear-gradient(100deg, #fdeef3 0%, #f2eff9 50%, #eef7e6 100%)", border: "1.5px solid #e4d8e6", boxShadow: "0 2px 8px rgba(80,70,100,.15)", color: "#2b2a33" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: 10.5, color: "#6b6676", letterSpacing: 0.8 }}>
-            <span>LIME 音声通話</span>
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#3b3946", letterSpacing: 0.4, fontVariantNumeric: "tabular-nums" }}>{timer}</span>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, margin: "14px 0 12px" }}>
-            <McSide label={String(name)} color="#b5486b" ring="mc-ring">
-              <McAvatar size={52} />
-            </McSide>
-            <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", gap: 6, marginBottom: 18 }} aria-hidden="true">
-              <span style={{ flex: 1, height: 2, background: "repeating-linear-gradient(90deg, #e07b93 0 4px, transparent 4px 8px)", opacity: 0.7 }} />
-              <span className="mc-wave" style={{ display: "flex", gap: 3, alignItems: "center", height: 20 }}>
-                {[0, 1, 2, 3, 4, 5].map((k) => (
-                  <i key={k} style={{ width: 3, height: 20, borderRadius: 2, background: k < 3 ? "#e07b93" : "#8fc25a", animationDelay: k * 0.12 + "s" }} />
-                ))}
-              </span>
-              <span style={{ flex: 1, height: 2, background: "repeating-linear-gradient(90deg, #8fc25a 0 4px, transparent 4px 8px)", opacity: 0.7 }} />
-            </div>
-            <McSide label="YOU" color="#5b8a2c" ring="mc-ring mc-ring-g">
-              <McYouAvatar size={52} />
-            </McSide>
-          </div>
-          <div style={{ textAlign: "center", fontSize: 10.5, color: "#6b6676" }}>{String(clock)} 接続</div>
-        </div>
-      </div>
-    );
-  }
+  const sub = on ? timer : stage === "ring" ? "着信中…" : "呼び出し中…";
+  const foot = String(clock) + (on ? " 接続" : stage === "ring" ? " 着信" : " 発信");
 
   return (
     <div style={{ width: "100%", maxWidth: 320, margin: "10px auto", padding: "4px 6px 12px", fontFamily: MC_FONT }}>
@@ -81,15 +72,46 @@ function MashiroCall(props = {}) {
             ) : null}
           </>
         ) : (
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(170deg, #fbe3ea 0%, #e6e3f3 55%, #cfdcee 100%)" }} />
+          <div style={{ position: "absolute", inset: 0, background: on ? "linear-gradient(170deg, #fbe3ea 0%, #e6e3f3 55%, #cfdcee 100%)" : "linear-gradient(170deg, #f8d3df 0%, #e3dcf2 55%, #c9d6ee 100%)", transition: "background .6s" }} />
         )}
 
-        {/* 위쪽: 이름과 통화 시간 */}
+        {/* 위쪽: 통화 종류와 상태(착신 중 / 호출 중 / 통화 시간) */}
         <div style={{ position: "absolute", left: 0, right: 0, top: 0, padding: "16px 14px 22px", textAlign: "center", color: mode === "voice" ? "#2b2a33" : "#fff", background: mode === "voice" ? "none" : "linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,0))" }}>
           <div style={{ fontSize: 10.5, letterSpacing: 1, opacity: 0.8 }}>{mode === "voice" ? "LIME 音声通話" : "LIME ビデオ通話"}</div>
           {mode === "voice" ? null : <div style={{ fontSize: 15, fontWeight: 800, marginTop: 2, textShadow: "0 1px 3px rgba(0,0,0,.4)" }}>{String(name)}</div>}
-          <div style={{ fontSize: 12, marginTop: 2, fontVariantNumeric: "tabular-nums", opacity: 0.9 }}>{timer}</div>
+          <div className={on ? "" : "mc-blink"} style={{ fontSize: 12, marginTop: 2, fontVariantNumeric: "tabular-nums", opacity: 0.9 }}>{sub}</div>
         </div>
+
+        {/* 음성통화 가운데: 프로필, 이름, (연결 뒤) 소리 막대 */}
+        {mode === "voice" ? (
+          <div style={{ position: "absolute", left: 0, right: 0, top: "20%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "#2b2a33" }}>
+            <div className={stage === "ring" ? "mc-vib" : ""} style={{ width: "34%" }}>
+              <div className="mc-ring" style={{ borderRadius: "50%", padding: 6, background: "rgba(255,255,255,.6)" }}>
+                <McAvatar size="100%" />
+              </div>
+            </div>
+            <div style={{ fontSize: 19, fontWeight: 800 }}>{String(name)}</div>
+            {on ? (
+              <div key="wave" className="mc-wave mc-fade" aria-hidden="true" style={{ display: "flex", gap: 4, alignItems: "center", height: 22 }}>
+                {[0, 1, 2, 3, 4].map((k) => (
+                  <i key={k} style={{ width: 4, height: 22, borderRadius: 2, background: "#e07b93", animationDelay: k * 0.13 + "s" }} />
+                ))}
+              </div>
+            ) : nag ? null : (
+              <div className="mc-dots" aria-hidden="true" style={{ display: "flex", gap: 6, height: 22, alignItems: "center" }}>
+                {[0, 1, 2].map((k) => (
+                  <i key={k} style={{ width: 6, height: 6, borderRadius: "50%", background: "#e07b93", animationDelay: k * 0.2 + "s" }} />
+                ))}
+              </div>
+            )}
+            {nag ? (
+              <div key={"nag" + nag} className="mc-nag" style={{ marginTop: 2, padding: "7px 12px", borderRadius: 14, background: "rgba(255,255,255,.85)", boxShadow: "0 2px 8px rgba(120,80,110,.18)", textAlign: "center", lineHeight: 1.45 }}>
+                <div lang="ja" style={{ fontSize: 13, fontWeight: 700, color: "#b5486b" }}>……でてくれへんの？</div>
+                <div lang="ko" style={{ fontSize: 11.5, color: "#5b5866" }}>……안 받아 줄 기가?</div>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         {/* 내 화면 (영상통화일 때): YOU 상자 위에 {{user}} 사진을 덮는다(없으면 YOU 상자가 보임) */}
         {mode !== "voice" ? (
@@ -101,14 +123,21 @@ function MashiroCall(props = {}) {
           </div>
         ) : null}
 
-        {/* 아래쪽: 연결 시각과 버튼 */}
+        {/* 아래쪽: 착신이면 거절·응답 단추, 그 밖엔 통화 단추 */}
         <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, padding: "18px 0 18px", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, background: mode === "voice" ? "none" : "linear-gradient(rgba(0,0,0,0), rgba(0,0,0,.5))" }}>
-          <div style={{ display: "flex", gap: 18 }} aria-hidden="true">
-            <McBtn bg="rgba(255,255,255,.22)" d="M12 4a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V7a3 3 0 0 1 3-3zM6 11a6 6 0 0 0 12 0M12 17v3" dark={mode === "voice"} />
-            <McBtn bg="#e5484d" d="M5 14c4.5-3.6 9.5-3.6 14 0l-2 2.4-3-1.2v-2.2c-1.4-.4-2.6-.4-4 0v2.2l-3 1.2z" fill />
-            <McBtn bg="rgba(255,255,255,.22)" d={mode === "voice" ? "M4 10v4M8 7v10M12 5v14M16 8v8M20 10v4" : "M4 7h11v10H4zM15 10l5-3v10l-5-3"} dark={mode === "voice"} />
-          </div>
-          <div style={{ fontSize: 10.5, color: mode === "voice" ? "#5b5866" : "rgba(255,255,255,.75)" }}>{String(clock)} 接続</div>
+          {stage === "ring" ? (
+            <div style={{ display: "flex", gap: 56 }}>
+              <McCallBtn bg="#e5484d" d={MC_HANGUP} label="拒否" onClick={() => setNag((n) => n + 1)} />
+              <McCallBtn bg="#34c37a" d={MC_PICKUP} label="応答" wiggle onClick={() => { setNag(0); setStage("on"); }} />
+            </div>
+          ) : (
+            <div key="calling" className="mc-fade" style={{ display: "flex", gap: 18 }} aria-hidden="true">
+              <McBtn bg="rgba(255,255,255,.22)" d="M12 4a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V7a3 3 0 0 1 3-3zM6 11a6 6 0 0 0 12 0M12 17v3" dark={mode === "voice"} />
+              <McBtn bg="#e5484d" d={MC_HANGUP} fill />
+              <McBtn bg="rgba(255,255,255,.22)" d={mode === "voice" ? "M4 10v4M8 7v10M12 5v14M16 8v8M20 10v4" : "M4 7h11v10H4zM15 10l5-3v10l-5-3"} dark={mode === "voice"} />
+            </div>
+          )}
+          <div style={{ fontSize: 10.5, color: mode === "voice" ? "#5b5866" : "rgba(255,255,255,.75)" }}>{foot}</div>
         </div>
       </div>
     </div>
@@ -190,16 +219,42 @@ const MC_FONT =
 const MC_CSS = `
 @keyframes mc-rise { from { opacity: 0; transform: translateY(24px) scale(.97); } to { opacity: 1; transform: none; } }
 @keyframes mc-on { from { opacity: 0; filter: blur(6px); } to { opacity: 1; filter: none; } }
-@keyframes mc-ring { 0% { box-shadow: 0 0 0 0 rgba(224,123,147,.45); } 100% { box-shadow: 0 0 0 12px rgba(224,123,147,0); } }
-@keyframes mc-ring-g { 0% { box-shadow: 0 0 0 0 rgba(143,194,90,.45); } 100% { box-shadow: 0 0 0 12px rgba(143,194,90,0); } }
+@keyframes mc-ring { 0% { box-shadow: 0 0 0 0 rgba(224,123,147,.45); } 100% { box-shadow: 0 0 0 18px rgba(224,123,147,0); } }
 @keyframes mc-bar { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }
+@keyframes mc-vib { 0%, 36%, 100% { transform: none; } 4% { transform: rotate(-7deg); } 8% { transform: rotate(7deg); } 12% { transform: rotate(-6deg); } 16% { transform: rotate(6deg); } 20% { transform: rotate(-4deg); } 24% { transform: rotate(4deg); } 28% { transform: rotate(-2deg); } }
+@keyframes mc-wig { 0%, 45%, 100% { transform: none; } 8% { transform: rotate(-14deg); } 16% { transform: rotate(14deg); } 24% { transform: rotate(-10deg); } 32% { transform: rotate(8deg); } }
+@keyframes mc-blink { 0%, 100% { opacity: .9; } 50% { opacity: .3; } }
+@keyframes mc-dot { 0%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@keyframes mc-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 .mc-phone { animation: mc-rise .45s cubic-bezier(.2,.9,.25,1) both; }
 .mc-feed { animation: mc-on .7s ease-out .15s both; }
 .mc-ring { animation: mc-ring 1.6s ease-out infinite; }
-.mc-ring-g { animation-name: mc-ring-g; animation-delay: .8s; }
 .mc-wave i { display: block; transform-origin: center; animation: mc-bar .9s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .mc-phone, .mc-feed, .mc-ring, .mc-wave i { animation: none; } }
+.mc-vib { animation: mc-vib 1.3s ease-in-out infinite; }
+.mc-wig { animation: mc-wig 1.6s ease-in-out infinite; }
+.mc-blink { animation: mc-blink 1.4s ease-in-out infinite; }
+.mc-dots i { display: block; animation: mc-dot 1.2s ease-in-out infinite; }
+.mc-fade, .mc-nag { animation: mc-fade .3s ease-out both; }
+.mc-cbtn { border: 0; padding: 0; background: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font: inherit; color: #3b3946; font-size: 11.5px; font-weight: 700; -webkit-tap-highlight-color: transparent; }
+.mc-cbtn:active span:first-child { transform: scale(.92); }
+.mc-cbtn:focus-visible span:first-child { outline: 2px solid #3b3946; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .mc-phone, .mc-feed, .mc-ring, .mc-wave i, .mc-vib, .mc-wig, .mc-blink, .mc-dots i, .mc-fade, .mc-nag { animation: none; } }
 `;
+
+const MC_HANGUP = "M5 14c4.5-3.6 9.5-3.6 14 0l-2 2.4-3-1.2v-2.2c-1.4-.4-2.6-.4-4 0v2.2l-3 1.2z";
+const MC_PICKUP = "M6.6 3.5l2.6 3.2-1.6 2.2c.9 1.9 2.4 3.4 4.3 4.3l2.2-1.6 3.2 2.6-1.4 3c-6.3-.6-11.3-5.6-11.9-11.9z";
+
+/* 착신 화면의 누르는 단추(거절·응답) */
+function McCallBtn({ bg, d, label, onClick, wiggle }) {
+  return (
+    <button type="button" className="mc-cbtn" onClick={onClick} aria-label={label}>
+      <span className={wiggle ? "mc-wig" : ""} style={{ width: 58, height: 58, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 3px 8px rgba(0,0,0,.2)", transition: "transform .1s" }}>
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d={d} fill="#fff" /></svg>
+      </span>
+      <span>{label}</span>
+    </button>
+  );
+}
 
 function McBtn({ bg, d, fill, dark }) {
   const col = dark ? "#3b3946" : "#fff";
@@ -222,31 +277,10 @@ function McCamOff() {
   );
 }
 
-/* 음성통화 카드의 한쪽: 동그라미 프로필 + 이름 */
-function McSide({ label, color, ring, children }) {
-  return (
-    <div style={{ flex: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-      <span className={ring} style={{ borderRadius: "50%", padding: 4, background: "rgba(255,255,255,.75)" }}>{children}</span>
-      <span style={{ fontSize: 12, fontWeight: 800, color: color, letterSpacing: 0.3 }}>{label}</span>
-    </div>
-  );
-}
-
-/* {{user}} 쪽 기본 프로필(연두) */
-function McYouAvatar({ size }) {
-  return (
-    <svg viewBox="0 0 34 34" width={size} height={size} aria-hidden="true" style={{ display: "block", borderRadius: "50%" }}>
-      <circle cx="17" cy="17" r="17" fill="#e3f2d3" />
-      <circle cx="17" cy="13.5" r="5.5" fill="#fff" stroke="#c6dfab" />
-      <path d="M6.5 30c1.6-6 5.6-9 10.5-9s8.9 3 10.5 9" fill="#fff" stroke="#c6dfab" />
-    </svg>
-  );
-}
-
 /* LIME 프로필과 같은 오리지널 토끼 인형 */
 function McAvatar({ size }) {
   return (
-    <svg viewBox="0 0 34 34" width={size} height={size} aria-hidden="true" style={{ display: "block", borderRadius: "50%" }}>
+    <svg viewBox="0 0 34 34" width={size} height={typeof size === "number" ? size : undefined} aria-hidden="true" style={{ display: "block", borderRadius: "50%" }}>
       <circle cx="17" cy="17" r="17" fill="#fde6ee" />
       <ellipse cx="12" cy="9" rx="3" ry="6.5" fill="#fff" stroke="#e7d5dc" />
       <ellipse cx="22" cy="9" rx="3" ry="6.5" fill="#fff" stroke="#e7d5dc" />
