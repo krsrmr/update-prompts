@@ -1,7 +1,8 @@
-// 필요 훅: useState, useEffect (react)
+// 필요 훅: useState, useEffect, useRef (react)
 // 통화 화면(세로 휴대폰). 마시로와 {{user}}가 떨어져서 통화가 연결되는 자리에 한 번 뜬다. 대화는 본문의 <CallVoice />로 이어진다.
 //   from  : 건 사람. "mashiro"(기본) = 착신 화면 → 유저가 '応答'을 눌러야 연결. '拒否'를 누르면 마시로가 울먹인다(통화는 안 끊김).
-//           "user" = 발신 화면('呼び出し中…') → 잠시 뒤 저절로 연결.
+//           "user" = 발신 화면('呼び出し中…') → 화면에 보이기 시작한 뒤 약 3초 지나 저절로 연결.
+//           (본문을 읽는 동안 넘어가 버리지 않게, 통화 화면이 절반 이상 보일 때부터 센다)
 //   video={false} : 음성통화. 프로필·이름·통화 시간.
 //   video={true}  : {{user}}가 건 영상통화(바로 연결). 그림을 세 겹으로 겹쳐 그린다(위가 있으면 위가 보인다).
 //       맨 위  특별 그림  vc-상황.webp            doing에서 MC_SCENES 낱말을 찾았을 때만
@@ -28,13 +29,30 @@ function MashiroCall(props = {}) {
   const [stage, setStage] = useState(isVideo ? "on" : byUser ? "dial" : "ring");
   const [sec, setSec] = useState(0);
   const [nag, setNag] = useState(0);
+  const [seen, setSeen] = useState(false);
+  const rootRef = useRef(null);
 
-  // 발신: 잠시 뒤 저절로 연결
+  // 통화 화면이 절반 이상 보이기 시작했는지 (못 알아내면 그냥 보인 것으로 친다)
   useEffect(() => {
-    if (stage !== "dial") return undefined;
-    const t = setTimeout(() => setStage("on"), 2600);
+    if (seen) return undefined;
+    const el = rootRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      setSeen(true);
+      return undefined;
+    }
+    const io = new IntersectionObserver((list) => {
+      if (list.some((e) => e.isIntersecting && e.intersectionRatio >= 0.5)) setSeen(true);
+    }, { threshold: [0, 0.5, 1] });
+    io.observe(el);
+    const safety = setTimeout(() => setSeen(true), 30000);
+    return () => { io.disconnect(); clearTimeout(safety); };
+  }, [seen]);
+  // 발신: 보이기 시작한 뒤 잠시 지나 저절로 연결
+  useEffect(() => {
+    if (stage !== "dial" || !seen) return undefined;
+    const t = setTimeout(() => setStage("on"), 3200);
     return () => clearTimeout(t);
-  }, [stage]);
+  }, [stage, seen]);
   // 연결된 뒤부터 통화 시간
   useEffect(() => {
     if (stage !== "on") return undefined;
@@ -57,7 +75,7 @@ function MashiroCall(props = {}) {
   return (
     <div style={{ width: "100%", maxWidth: 320, margin: "10px auto", padding: "4px 6px 12px", fontFamily: MC_FONT }}>
       <style>{MC_CSS}</style>
-      <div className="mc-phone" style={{ position: "relative", aspectRatio: "9 / 16", borderRadius: 34, overflow: "hidden", background: "#11141b", boxShadow: "0 18px 40px -16px rgba(0,0,0,.6), inset 0 0 0 2px #3a3c43" }}>
+      <div ref={rootRef} className="mc-phone" style={{ position: "relative", aspectRatio: "9 / 16", borderRadius: 34, overflow: "hidden", background: "#11141b", boxShadow: "0 18px 40px -16px rgba(0,0,0,.6), inset 0 0 0 2px #3a3c43" }}>
         {/* 화면: 영상통화는 '카메라 꺼짐' 위에 상황 그림을 덮는다(그림이 없으면 밑이 보임) */}
         {mode === "video" ? (
           <>
