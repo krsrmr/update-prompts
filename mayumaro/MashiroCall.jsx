@@ -75,7 +75,7 @@ function MashiroCall(props = {}) {
   return (
     <div style={{ width: "100%", maxWidth: 320, margin: "10px auto", padding: "4px 6px 12px", fontFamily: MC_FONT }}>
       <style>{MC_CSS}</style>
-      <div ref={rootRef} className="mc-phone" style={{ position: "relative", aspectRatio: "9 / 16", borderRadius: 34, overflow: "hidden", background: "#11141b", boxShadow: "0 18px 40px -16px rgba(0,0,0,.6), inset 0 0 0 2px #3a3c43" }}>
+      <div ref={rootRef} className="mc-phone" style={{ position: "relative", aspectRatio: mode === "voice" ? "9 / 15" : "9 / 16", borderRadius: 34, overflow: "hidden", background: "#11141b", boxShadow: "0 18px 40px -16px rgba(0,0,0,.6), inset 0 0 0 2px #3a3c43" }}>
         {/* 화면: 영상통화는 '카메라 꺼짐' 위에 상황 그림을 덮는다(그림이 없으면 밑이 보임) */}
         {mode === "video" ? (
           <>
