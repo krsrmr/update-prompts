@@ -1,6 +1,7 @@
 // 필요 훅: useState, useEffect, useRef (react)
 // 통화 화면(세로 휴대폰). 마시로와 {{user}}가 떨어져서 통화가 연결되는 자리에 한 번 뜬다. 대화는 본문의 <CallVoice />로 이어진다.
 //   from  : 건 사람. "mashiro"(기본) = 착신 화면 → 유저가 '応答'을 눌러야 연결. '拒否'를 누르면 마시로가 울먹인다(통화는 안 끊김).
+//           화면이 보인 뒤 15초 동안 안 받으면 "와…… 와 안 받노……" 말풍선이 뜬다(받을 때까지).
 //           "user" = 발신 화면('呼び出し中…') → 화면에 보이기 시작한 뒤 약 3초 지나 저절로 연결.
 //           (본문을 읽는 동안 넘어가 버리지 않게, 통화 화면이 절반 이상 보일 때부터 센다)
 //   video={false} : 음성통화. 프로필·이름·통화 시간.
@@ -30,6 +31,7 @@ function MashiroCall(props = {}) {
   const [sec, setSec] = useState(0);
   const [nag, setNag] = useState(0);
   const [seen, setSeen] = useState(false);
+  const [late, setLate] = useState(false);
   const rootRef = useRef(null);
 
   // 통화 화면이 절반 이상 보이기 시작했는지 (못 알아내면 그냥 보인 것으로 친다)
@@ -53,6 +55,12 @@ function MashiroCall(props = {}) {
     const t = setTimeout(() => setStage("on"), 3200);
     return () => clearTimeout(t);
   }, [stage, seen]);
+  // 착신: 보이기 시작한 뒤 15초 동안 안 받으면 혼잣말
+  useEffect(() => {
+    if (stage !== "ring" || !seen || late) return undefined;
+    const t = setTimeout(() => setLate(true), MC_LATE_MS);
+    return () => clearTimeout(t);
+  }, [stage, seen, late]);
   // 연결된 뒤부터 통화 시간
   useEffect(() => {
     if (stage !== "on") return undefined;
@@ -102,8 +110,8 @@ function MashiroCall(props = {}) {
 
         {/* 음성통화 가운데: 프로필, 이름, (연결 뒤) 소리 막대 */}
         {mode === "voice" ? (
-          <div style={{ position: "absolute", left: 0, right: 0, top: "20%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "#2b2a33" }}>
-            <div className={stage === "ring" ? "mc-vib" : ""} style={{ width: "34%" }}>
+          <div style={{ position: "absolute", left: 0, right: 0, top: "17%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, color: "#2b2a33" }}>
+            <div className={stage === "ring" ? "mc-vib" : ""} style={{ width: "31%" }}>
               <div className="mc-ring" style={{ borderRadius: "50%", padding: 6, background: "rgba(255,255,255,.6)" }}>
                 <McAvatar size="100%" />
               </div>
@@ -115,7 +123,7 @@ function MashiroCall(props = {}) {
                   <i key={k} style={{ width: 4, height: 22, borderRadius: 2, background: "#e07b93", animationDelay: k * 0.13 + "s" }} />
                 ))}
               </div>
-            ) : nag ? null : (
+            ) : nag || late ? null : (
               <div className="mc-dots" aria-hidden="true" style={{ display: "flex", gap: 6, height: 22, alignItems: "center" }}>
                 {[0, 1, 2].map((k) => (
                   <i key={k} style={{ width: 6, height: 6, borderRadius: "50%", background: "#e07b93", animationDelay: k * 0.2 + "s" }} />
@@ -123,10 +131,9 @@ function MashiroCall(props = {}) {
               </div>
             )}
             {nag ? (
-              <div key={"nag" + nag} className="mc-nag" style={{ marginTop: 2, padding: "7px 12px", borderRadius: 14, background: "rgba(255,255,255,.85)", boxShadow: "0 2px 8px rgba(120,80,110,.18)", textAlign: "center", lineHeight: 1.45 }}>
-                <div lang="ja" style={{ fontSize: 13, fontWeight: 700, color: "#b5486b" }}>……でてくれへんの？</div>
-                <div lang="ko" style={{ fontSize: 11.5, color: "#5b5866" }}>……안 받아 줄 기가?</div>
-              </div>
+              <McMutter key={"nag" + nag} ja="……でてくれへんの？" ko="……안 받아 줄 기가?" />
+            ) : late && !on ? (
+              <McMutter key="late" ja={"なんで……\nなんで出えへんの……"} ko="와…… 와 안 받노……" />
             ) : null}
           </div>
         ) : null}
@@ -261,6 +268,19 @@ const MC_CSS = `
 
 const MC_HANGUP = "M5 14c4.5-3.6 9.5-3.6 14 0l-2 2.4-3-1.2v-2.2c-1.4-.4-2.6-.4-4 0v2.2l-3 1.2z";
 const MC_PICKUP = "M6.6 3.5l2.6 3.2-1.6 2.2c.9 1.9 2.4 3.4 4.3 4.3l2.2-1.6 3.2 2.6-1.4 3c-6.3-.6-11.3-5.6-11.9-11.9z";
+
+/* 착신 화면에서 안 받으면 뜨는 혼잣말 시간(ms) */
+const MC_LATE_MS = 15000;
+
+/* 착신 화면의 혼잣말 말풍선 */
+function McMutter({ ja, ko }) {
+  return (
+    <div className="mc-nag" style={{ maxWidth: "86%", marginTop: 2, padding: "7px 12px", borderRadius: 14, background: "rgba(255,255,255,.85)", boxShadow: "0 2px 8px rgba(120,80,110,.18)", textAlign: "center", lineHeight: 1.45 }}>
+      <div lang="ja" style={{ fontSize: 13, fontWeight: 700, color: "#b5486b", whiteSpace: "pre-line" }}>{ja}</div>
+      <div lang="ko" style={{ fontSize: 11.5, color: "#5b5866" }}>{ko}</div>
+    </div>
+  );
+}
 
 /* 착신 화면의 누르는 단추(거절·응답) */
 function McCallBtn({ bg, d, label, onClick, wiggle }) {
