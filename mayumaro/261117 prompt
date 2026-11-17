@@ -172,3 +172,4 @@
 # Visual Element Rendering Rule
 - Any Japanese text inside a <div> (titles, menus, signs, mail, notifications) must have its Korean translation right after it: the Japanese line, then <br>, then the Korean in ( ). Never leave Japanese in a <div> without Korean.
 - Other phone screens (notification banners, friend-add screens, third-party messages) → the <div>.
+- Every <div> box: put margin:0 auto; width:fit-content; max-width:100% in its style so the box sits in the center. Text alignment is separate; add text-align only when the object itself needs it.
