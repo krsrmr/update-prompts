@@ -1,12 +1,12 @@
 // 필요 훅: useState (react)
 // !실황 명령어 전용. 여성 익명 게시판 'ガールズちゃんねむ(가루네무)'의 마유마로 최신화 실황 트피를 몰래 들여다보는 화면.
 // 직전 장면까지가 루넬 최신화로 올라왔다고 치고 독자들이 떠든다(실화인 줄 모른다). 마시로는 이 화면을 모른다.
-//   topics : 트피 목록. 트피 하나 = 문자열 배열.
-//            첫 줄 "종류|제목JA|제목KO|본문JA|본문KO|플러스|마이너스"   종류: 感想·考察·予想·妄想
-//            다음 줄부터 댓글 "댓글JA|댓글KO|플러스|마이너스"  (댓글 번호는 코드가 붙인다)
+//   topics : 문자열 목록 하나. 트피 첫 줄 "종류|제목JA|제목KO|본문JA|본문KO|플러스|마이너스"(종류: 感想·考察·予想·妄想),
+//            그 아래 댓글 "댓글JA|댓글KO|플러스|마이너스"을 줄줄이, 그다음 트피 첫 줄…  (댓글 번호는 코드가 붙인다)
+//            트피마다 [ ]로 묶어도 똑같이 읽는다.
 //            칸 안의 줄바꿈은 " / ". >>3 처럼 쓰면 3번 댓글을 가리키는 파란 글씨가 된다.
 //   clock  : 지금 시각
-// 예) <GirlsThread clock="23:41" topics={[["感想|メガネくん顔赤すぎ|안경군 얼굴 너무 빨개|本文|본문|1243|18", "わかる|ㅇㅈ|312|2"]]} />
+// 예) <GirlsThread clock="23:41" topics={["感想|メガネくん顔赤すぎ|안경군 얼굴 너무 빨개|本文|본문|1243|18", "わかる|ㅇㅈ|312|2", "予想|来週告白？|다음 주 고백?|本文|본문|532|44", "まだ早い|아직 일러|201|9"]} />
 
 function GirlsThread(props = {}) {
   const { clock = "23:41", topics = GT_SAMPLE } = props;
@@ -149,23 +149,34 @@ function GtLogo() {
   );
 }
 
+/* 트피 목록 읽기. 봇이 [[…],[…]]로 묶어 쓰든 ["…","…"]로 한 줄씩 늘어놓든 같게 읽는다.
+   종류(感想·考察·予想·妄想)로 시작하는 줄 = 새 트피의 첫 줄, 그 밖의 줄 = 바로 앞 트피의 댓글. */
 function gtTopics(topics) {
-  return (Array.isArray(topics) ? topics : [])
-    .map((t) => (Array.isArray(t) ? t : [t]).filter(Boolean).map((x) => String(x)))
-    .filter((t) => t.length > 0)
-    .map((t) => {
-      const h = t[0].split("|");
-      return {
-        kind: (h[0] || "").trim(),
-        tJa: h[1] || "", tKo: h[2] || "", bJa: h[3] || "", bKo: h[4] || "",
-        plus: gtInt(h[5]), minus: gtInt(h[6]),
-        comments: t.slice(1).map((line) => {
-          const p = line.split("|");
-          return { ja: p[0] || "", ko: p[1] || "", plus: gtInt(p[2]), minus: gtInt(p[3]) };
-        })
-      };
-    })
-    .map((t) => ({ ...t, flame: t.comments.filter((m) => m.minus > m.plus).length >= 2 }));
+  const lines = [];
+  const walk = (x) => {
+    if (Array.isArray(x)) x.forEach(walk);
+    else if (x != null && String(x).trim()) lines.push(String(x));
+  };
+  walk(topics);
+  const out = [];
+  lines.forEach((line) => {
+    const p = line.split("|");
+    const kind = gtKind(p[0]);
+    if (kind || p.length >= 6) {
+      out.push({ kind: kind || String(p[0] || "").trim(), tJa: p[1] || "", tKo: p[2] || "", bJa: p[3] || "", bKo: p[4] || "", plus: gtInt(p[5]), minus: gtInt(p[6]), comments: [] });
+    } else {
+      if (!out.length) out.push({ kind: "", tJa: "", tKo: "", bJa: "", bKo: "", plus: 0, minus: 0, comments: [] });
+      out[out.length - 1].comments.push({ ja: p[0] || "", ko: p[1] || "", plus: gtInt(p[2]), minus: gtInt(p[3]) });
+    }
+  });
+  return out.map((t) => ({ ...t, flame: t.comments.filter((m) => m.minus > m.plus).length >= 2 }));
+}
+
+/* 종류 낱말 → 感想·考察·予想·妄想 (한국어로 써도 알아듣는다). 종류가 아니면 "" */
+function gtKind(v) {
+  const k = String(v || "").replace(/[【】\[\]\s]/g, "");
+  const map = { 感想: "感想", 考察: "考察", 予想: "予想", 妄想: "妄想", 감상: "感想", 분석: "考察", 추측: "予想", 궁예: "予想", 망상: "妄想" };
+  return map[k] || "";
 }
 
 function gtInt(v) {
