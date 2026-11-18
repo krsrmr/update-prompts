@@ -48,7 +48,7 @@ function GirlsThread(props = {}) {
           {list.map((t, i) => (
             <button key={i} type="button" className={"gt-btn gt-tab" + (i === tab ? " on" : "")} onClick={() => setTab(i)} aria-pressed={i === tab}
               style={{ flex: "1 1 0", minWidth: 92, textAlign: "left", padding: "7px 9px", borderRadius: 10, border: "1.5px solid " + (i === tab ? c.pink : c.line), background: i === tab ? "#fff5f9" : "#fff" }}>
-              <GtKind kind={t.kind} />
+              <GtKind kind={t.kind} />{t.flame ? <GtFlame small /> : null}
               <span style={{ display: "block", marginTop: 4, fontSize: 11.5, fontWeight: 700, color: c.ink, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.tJa}</span>
               <span style={{ display: "block", fontSize: 10, color: c.meta }}>コメント {t.comments.length}</span>
             </button>
@@ -60,6 +60,7 @@ function GirlsThread(props = {}) {
             {/* 트피 본문 */}
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <GtKind kind={cur.kind} />
+              {cur.flame ? <GtFlame /> : null}
               <span style={{ fontSize: 10.5, color: c.meta }}>匿名 · {String(clock)}</span>
             </div>
             <div lang="ja" style={{ marginTop: 6, fontSize: 16, fontWeight: 800, lineHeight: 1.45 }}>{cur.tJa}</div>
@@ -128,6 +129,15 @@ function GtKind({ kind }) {
   );
 }
 
+/* 싸움 댓글(마이너스가 더 많은 댓글)이 2개 이상인 트피 */
+function GtFlame({ small }) {
+  return (
+    <span className="gt-flame" style={{ display: "inline-block", marginLeft: small ? 4 : 0, fontSize: small ? 9 : 10, fontWeight: 800, color: "#e5484d", background: "#fff0ec", border: "1px solid #f7c2b3", borderRadius: 4, padding: small ? "0 4px" : "1px 6px" }}>
+      🔥荒れてます
+    </span>
+  );
+}
+
 /* 오리지널 로고: 말풍선 안의 잠자는 달 */
 function GtLogo() {
   return (
@@ -154,7 +164,8 @@ function gtTopics(topics) {
           return { ja: p[0] || "", ko: p[1] || "", plus: gtInt(p[2]), minus: gtInt(p[3]) };
         })
       };
-    });
+    })
+    .map((t) => ({ ...t, flame: t.comments.filter((m) => m.minus > m.plus).length >= 2 }));
 }
 
 function gtInt(v) {
@@ -202,13 +213,15 @@ const GT_CSS = `
 @keyframes gt-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes gt-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 @keyframes gt-live { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
+@keyframes gt-flame { 0%, 100% { transform: none; } 50% { transform: translateY(-1px) scale(1.04); } }
+.gt-flame { animation: gt-flame 1.2s ease-in-out infinite; }
 .gt-card { animation: gt-rise .4s cubic-bezier(.2,.9,.25,1) both; }
 .gt-in { animation: gt-in .25s ease-out both; }
 .gt-live { animation: gt-live 1.6s ease-in-out infinite; }
 .gt-btn { cursor: pointer; font: inherit; -webkit-tap-highlight-color: transparent; }
 .gt-btn:focus-visible { outline: 2px solid #c93a72; outline-offset: 2px; }
 .gt-vote:active { transform: scale(.94); }
-@media (prefers-reduced-motion: reduce) { .gt-card, .gt-in, .gt-live { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .gt-card, .gt-in, .gt-live, .gt-flame { animation: none; } }
 `;
 
 /* 미리보기용 기본 내용 */
@@ -224,7 +237,10 @@ const GT_SAMPLE = [
     "予想|来週ついに告白くる？|다음 주 드디어 고백각?|伏線拾うとそろそろだと思うんだよね / 3話の傘のシーン覚えてる？あれ絶対つながってる|떡밥 주워 보면 슬슬인 것 같음 / 3화 우산 장면 기억함? 그거 무조건 연결됨|532|44",
     "まだ早い。この作者は焦らしの天才|아직 일러. 이 작가 애태우기 장인임|201|9",
     "どうせまた『資料です』で逃げる|어차피 또 '자료입니다'로 튈 듯|188|3",
-    "頼むから付き合って。作者さん働いて|제발 사귀어. 작가님 일하세요|420|6"
+    "頼むから付き合って。作者さん働いて|제발 사귀어. 작가님 일하세요|420|6",
+    "告白とかどうでもいい。早く次の取材シーン描け|고백이고 뭐고 됐고 빨리 다음 취재씬이나 그려|35|210",
+    ">>4 エロ目当ては巣に帰れ。ここ考察トピなんだけど|>>4 섹무새는 집에 가라. 여기 궁예 트피거든|388|41",
+    ">>5 は？あんたの重い解釈のほうが地雷なんだが|>>5 하? 니 무거운 해석이 더 지뢰거든|22|156"
   ],
   [
     "妄想|この二人が同棲したら|이 둘이 동거하면|メガネくん絶対朝ごはん作りすぎる / 冷蔵庫ぬいぐるみの形のプリンで埋まってそう|안경군 무조건 아침밥 과하게 만들 듯 / 냉장고 인형 모양 푸딩으로 꽉 차 있을 것 같음|388|21",
