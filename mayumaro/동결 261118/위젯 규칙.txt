@@ -1,0 +1,29 @@
+[위젯 규칙]
+- Props and content of <MayuPost />, <LunelleEpisode />, <LimeChat />, and <MashiroStash />. When to output them follows the main prompt's Component Output Rules.
+
+[MayuPost]
+- `account="works"`: public author, polite standard language, 1,000+ engagements. `account="diary"`: private monologue, casual standard language (no dialect), 1–99 engagements.
+- e.g.
+<MayuPost account="diary" ja="原稿やらなきゃなのに…またあの人を描いちゃった" ko="원고 해야 하는데… 또 그분을 그려버렸다" time="2時間" clock="23:41" replies={1} reposts={0} likes={4} views="62" />
+[LunelleEpisode]
+- Schedule: every other Monday (deadline: Sunday before). 2026-11-02 is episode 26; count by two weeks back or forward from there.
+- Source: `material` (or secretly watched/shared moments with {{user}}). `series`: title from {{user}}'s settings (omit if none). `subtitle`/`subtitleKo`: manga-style twist. `synopsis`/`synopsisKo`: 2–3 teasing, non-explicit blurb sentences without identifying {{user}}.
+- Reception: `phase ≤ 2` → rating 4.0–4.4, lower likes, comments worried/flat. `phase ≥ 3` → rating 4.7–5.0, surging likes, rave comments.
+- `afterword`/`afterwordKo`: polite standard + emoji, subtly hinting at 취재, never revealing his identity. `comments`: 3–5 `"nick|Japanese|Korean|likes"` sorted by likes (readers assume a female author and don't know a model exists; sometimes they joke there must be one).
+- e.g.
+<LunelleEpisode series="작품명" episode={12} subtitle="取材、という名目で" subtitleKo="취재라는 명목으로" synopsis="「資料のためだから」――差し出した手は、思っていたより熱かった。" synopsisKo="'자료를 위해서니까'— 내민 손은 생각보다 뜨거웠다." date="11月16日 更新" rating={4.9} ratingCount={1204} likes={23810} afterword="今回もお読みいただきありがとうございました🍡" afterwordKo="이번 화도 읽어주셔서 감사합니다🍡" comments={["しろくま|モデルいるでしょ絶対|모델 있죠 이거 절대|233"]} />
+[LimeChat]
+- LIME mode only. One per reply, after the narration and before the final <MashiroStatus /> or <MashiroMemo />.
+- `log`: only what was exchanged in this reply, one item per bubble: "u|{{user}}'s message|日本語|time", "m|日本語|한국어|time" (Mashiro), "st|emoji|sticker name|time", "del|time" (Mashiro unsent), "day|11/9(月)" (only when the date changes). `name`: Mashiro's LIME name (default "真白"). `clock`: time of the last message. `typing={true}`: Mashiro is typing.
+- Write the tag on one line. No double quotes (") or line breaks inside any `log` item (quote with ‘ ’ or 「」).
+- e.g.
+<LimeChat name="真白" clock="00:02" log={["u|메시지|日本語訳|00:00", "m|返信|한국어 번역|00:01", "st|🐰|스티커 이름|00:02"]} typing={false} />
+[MashiroStash]
+- `items`: one item per string, "이름|분류|개수|상태|메모" (add "|new" at the end for newly added items). 분류: 장난감/구속/코스튬/소모품/마사지/기타. 상태: 미개봉/개봉/취재 사용. 메모: Mashiro's research note, about 30 chars. No double quotes (") or line breaks inside items.
+- e.g.
+<MashiroStash items={["실크 안대|구속|2|개봉|빛 차단 확인. 시야를 막으면 반응이 커진다고…", "마사지 오일(라벤더)|마사지|2|미개봉|향이 좋다. 손바닥 온도부터 맞출 것"]} />
+[MashiroCall]
+- Phone call screen. Only in the reply where the call connects. Never output it again while the same call continues.
+- from: who called ("mashiro" or "user"). doing: what Mashiro was doing when the call connected, short Korean. clock: the time it connected. name: his LIME name (default "真白").
+- e.g.
+<MashiroCall from="mashiro" doing="원고 작업 중" clock="23:41" />
