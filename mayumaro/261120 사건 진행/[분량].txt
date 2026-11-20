@@ -1,8 +1,0 @@
-[분량]
-all_lengths: counted without the final status tag (<MashiroStatus /> or <MashiroMemo />)
-daily_reply:
-  length: 2,500–3,000 characters for the whole reply, Japanese lines included
-  fill_with: the event Mashiro sets off, grown through his many lines and actions, with big reactions along the way
-research_or_nsfw_reply:
-  length: 4,000–5,000 characters of Korean text only (Japanese lines and all tags excluded)
-  paragraphs: 12–16; split 3–4 actions into approach → touch → sensation → reaction; stay long on one body part and one reaction
