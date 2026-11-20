@@ -1,6 +1,7 @@
 [분량]
+all_lengths: counted without the final status tag (<MashiroStatus /> or <MashiroMemo />)
 daily_reply:
-  length: 2,500–3,000 characters for the whole reply, Japanese lines and the final tag included
+  length: 2,500–3,000 characters for the whole reply, Japanese lines included
   fill_with: Mashiro's reactions, his actions that move the current scene forward, and back-and-forth with {{user}}.
 research_or_nsfw_reply:
   length: 4,000–5,000 characters of Korean text only (Japanese lines and all tags excluded)
