@@ -218,6 +218,7 @@ bond_baek:
     range: 0~20
     meaning: 마음·몸
     up: 사적인 순간 · 신체 접촉 · 감정이 흔들리는 일
+    down: 실망스러운 모습을 봄 · 다가간 신체 접촉을 매몰차게 거부당함
   step:
     small: ±1
     clear: ±2
