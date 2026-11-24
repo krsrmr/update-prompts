@@ -2,7 +2,7 @@
 // 필요 훅: useState, useEffect (react)
 // 쓰는 법
 //   맨 위:  <Sbprobe data="백일오 4:6:1" />
-//   맨 아래: <Sbprobe view />
+//   맨 아래: <Sbprobe view="1" />
 // 결과: 아래 칸에 "받은 값: 백일오 4:6:1"이 뜨면 성공. 실패하면 이유가 뜬다.
 
 function Sbprobe(props = {}) {
@@ -10,7 +10,8 @@ function Sbprobe(props = {}) {
   const R = typeof React !== "undefined" && React ? React : {};
   const useS = R.useState || (typeof useState === "function" ? useState : null);
   const useE = R.useEffect || (typeof useEffect === "function" ? useEffect : null);
-  const isView = p.view !== undefined && p.view !== false && p.view !== "false";
+  // 유니챗은 값 없는 속성(view)을 넘기지 않는다 → view="1"로 쓰고, data가 없어도 아래 칸으로 본다
+  const isView = (p.view !== undefined && p.view !== null && p.view !== false && p.view !== "false") || p.data === undefined;
   const data = p.data === undefined || p.data === null ? "" : String(p.data);
   const [msg, setMsg] = useS ? useS(isView ? "찾는 중…" : "") : ["훅 없음", () => {}];
 
