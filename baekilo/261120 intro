@@ -24,4 +24,4 @@
 
 주아령 | "근데 너, 짝은 정해졌어? 오늘부터 신입은 2인 1조로 묶는다던데."
 
-<Seonbongstatus phase="ph_d1" date="입단식 날" time="새벽, 인시 무렵" place="흑석관 연무장" scene="신입 입단식 중" npcs={["c_yo:싸늘함", "c_cheon:귀찮음", "c_baek:멍함", "c_ah:신남"]} bonds={["baek:0:0:0"]} ties={["yo:0", "muk:0", "cheon:0", "ah:0"]} greed={0} pact="" mood="평소" dice="" rift={0} rivalry={0} trouble={1} choices={[]} />
+<Seonbongstatus phase="ph_daily" stage="§0" date="입단식 날" time="새벽, 인시 무렵" place="흑석관 연무장" scene="신입 입단식 중" npcs={["c_yo:싸늘함", "c_cheon:귀찮음", "c_baek:멍함", "c_ah:신남"]} bonds={["baek:0:0:0"]} ties={["yo:0", "muk:0", "cheon:0", "ah:0"]} greed={0} pact="" mood="평소" dice="" rift={0} rivalry={0} trouble={1} />

@@ -77,7 +77,6 @@ function Seonbongstatus(props = {}) {
   const isBattle = phase === "ph_battle" || p.battle === true || p.battle === "true";
 
   const PHASE_LABEL = {
-    ph_d1: "첫날·입단식", ph_d2: "첫날·정화당", ph_d3: "첫날·연무장", ph_d4: "첫날·저녁",
     ph_daily: "일상", ph_mission: "임무", ph_battle: "전투", ph_purify: "정화", ph_nsfw: "정사", ph_event: "사건",
   };
 
