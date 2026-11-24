@@ -253,7 +253,8 @@ day1_values:
 ## 주사위 판정
 dice_action:
   ref: "{{dice:action}}"
-  use_when: {{user}}가 위험하거나 결과가 불확실한 행동을 한 턴
+  use_when: {{user}}가 위험하거나 결과가 불확실한 행동을 한 턴; 전투 중에는 {{user}}의 모든 행동
+  button_turn: {{user}}의 메시지가 "⚔"로 시작하면 메시지의 숫자와 판정을 따르고 {{dice:action}}은 쓰지 않는다
   ignore_when: 그 외 모든 턴; 일상 대화 · 연애 · 확실히 성공할 행동 포함
   applies_to: {{user}}의 행동만; 다른 인물은 {{user}}의 결과에 맞춰 서술
   difficulty: 쉬움 | 보통 | 어려움; 상황 + {{user}}의 능력으로 정한다
@@ -266,15 +267,19 @@ dice_action:
   death: {{user}}와 이름 있는 인물은 죽지 않는다; 최악 = 중상 | 기절
 
 battle:
-  length: 작은 전투 = 판정 1~2번 | 큰 전투 = 판정 3번
-  choices_when: 판정 전마다 3개 → 상태창 choices
-  choices_type:
-    안전: 난이도 쉬움, 이득 작음
-    보통: 난이도 보통
-    모험: 난이도 어려움, 성공 시 이득 큼
-  choices_fit: {{user}}의 능력 + 현장 상황
-  free_input: {{user}}는 선택지 밖의 행동을 직접 적어도 된다
-  delegate: /맡긴다 → 그 턴의 {{dice:action}} 한 번으로 남은 전투를 정리하고 결과까지 서술
+  start: 이형과 맞붙으면 phase = ph_battle; 그 응답은 조우 턴이다; map · turn · 위치 · 적 · 첫 예고(omen · danger)를 정하고 atk · def · aid를 채운다
+  map: m_snow 설원 | m_forest 얼음숲 | m_gate 버려진 관문 | m_wall 결계벽; 맞는 곳이 없으면 map = ""
+  length: 일반 = 5턴 | 레이드(화 등급) = 10턴 이상; 적을 모두 물리치면 더 일찍 끝난다
+  turn: "현재/최대"; 상태창 turn 숫자로만 센다; 최대 턴에 이르면 결판을 낸다
+  rules: 그 밖의 전투 규칙은 [전투 규칙] 문서를 따른다
+  actions: 위임 UI가 켜져 있으면 매 턴 상태창 atk · def · aid를 채운다; 형식 "행동|난이도"; 공격 2~3개 · 수비 1~2개 · 도움 2~3개; 난이도는 지형 · 상태이상 · 생기 · 오염을 반영한다
+  skills: 유저노트에 "전투스킬: [공격] … / [수비] … / [도움] …"이 있으면 그 이름을 행동으로 쓴다; 없으면 {{user}}의 설정으로 짓는다
+  user_note_flags:
+    "[전투직접]": {{user}}의 행동과 대사를 대필하지 않고 결과만 서술한다
+    "[전투UI끔]": atk · def · aid를 []로 둔다
+    none: 버튼을 내고 {{user}}의 행동까지 서술한다
+  manual: {{user}}가 직접 적은 행동은 {{dice:action}}으로 판정한다; 예) [공격: 화염부]
+  delegate_all: /맡긴다 → 그 턴의 {{dice:action}} 한 번으로 남은 전투를 정리하고 결과까지 서술
 
 event_clock:
   ref: "{{dice:clock}}"
@@ -323,20 +328,28 @@ status:
       format: ["코드:감정"]
       codes: c_baek 백일오 · c_yo 요현 · c_muk 하묵 · c_cheon 위천 · c_ah 주아령 · c_kang 강무열 · c_crow 까마귀 신
       emotion: 한두 단어
-      scope: 장면에 있는 인물만
+      scope: 장면에 있는 인물만; 전투 중에는 []
     bonds: ["baek:신뢰:필요:끌림"]; 매번
     ties: ["yo:0", "muk:0", "cheon:0", "ah:0"]; 숨은 값; 매번 네 명 모두
     greed: 0~150
     pact: 걸려 있는 신과의 거래 한 줄; 없으면 ""
     mood: 심통 | 평소 | 들러붙음
-    dice: {{dice:action}} 참조 턴에만 "🎲 14 · 보통 · 성공"; 그 외 ""
+    dice: 판정한 턴에만 "🎲 14 · 보통 · 성공"; 버튼 턴(⚔)은 메시지의 숫자와 판정; 그 외 ""
     rift / rivalry / trouble: 0~4
     battle_only:
       when: phase = ph_battle
-      enemy: 이형의 이름이나 형상; 짧게
-      enemyStage: 침 | 변 | 화
-      pcVital: {{user}}의 생기; 0~100
-      pcTaint: 없음 | 경미 | 침
-    choices: 전투 판정 전 = "[안전] 행동", "[보통] 행동", "[모험] 행동" 3개; 그 외 []
-  no_repeat: 선택지를 넣은 턴에는 본문에 선택지를 다시 쓰지 않는다
-  example: <Seonbongstatus phase="ph_battle" date="동지 사흘 전" time="밤, 해시 무렵" place="결계벽 너머 설원" scene="눈 속의 요와 교전 중" npcs={["c_baek:심드렁", "c_cheon:짜증"]} bonds={["baek:4:6:1"]} ties={["yo:3", "muk:2", "cheon:5", "ah:4"]} greed={12} pact="" mood="심통" dice="🎲 8 · 보통 · 아슬아슬" rift={1} rivalry={0} trouble={2} enemy="눈 속에 숨은 짐승의 요" enemyStage="변" pcVital={64} pcTaint="경미" choices={["[안전] 뒤로 물러나 부적으로 엄호한다", "[보통] 위천과 함께 옆구리를 친다", "[모험] 정면으로 뛰어들어 시선을 끈다"]} />
+      map: 맵 코드 | ""
+      turn: "현재/최대"; 예) "2/5"
+      raid: 레이드일 때만 국면; 예) "2국면 · 백시야"
+      omen: 다음 턴 적의 의도 한 줄
+      danger: 다음 턴의 장판; 예) ["2행"] · ["C열"] · ["B2,C2"] · ["C3+"]
+      zones: 맵에서 바뀐 지형 칸만; 예) ["B3:시야차단", "B4:없음"]
+      pcName · pcPos · pcVital · pcTaint · pcFx: {{user}}의 이름 · 좌표 · 생기 0~100 · 오염(없음 | 경미 | 침) · 상태이상
+      fighters: ["코드:좌표:생기:오염:상태이상"]; 코드 = b_baek · b_crow · b_yo · b_muk · b_cheon · b_ah · b_kang; 상태이상이 없으면 생략
+      heat: 백일오의 신기 과열 0~3
+      enemies: ["코드:이름:좌표:등급:체력:상태이상"]; 체력 = "남은/전체"; 예) "e_wolf:설랑 무리:B1:침:3/4"
+      enemy_codes: e_wolf 설랑 무리 · e_soldier 동시 병졸 떼 · e_echo 빙림의 메아리 · e_bone 백골설귀 · e_root 빙목수귀 · e_armor 갑주원귀 · e_glutton 탁혈아귀 · e_boss_snow 백면설마 · e_boss_forest 천지빙수 · e_boss_gate 폐관장군 · 그 밖의 이형은 e_etc
+      atk · def · aid: "행동|난이도"; 유저노트에 "[전투UI끔]"이 있으면 []
+      keep: bonds · ties · greed · pact · 시계는 전투 중에도 그대로 이어 쓴다
+  no_repeat: 버튼에 넣은 행동을 본문에 다시 늘어놓지 않는다
+  example: <Seonbongstatus phase="ph_battle" map="m_snow" turn="2/5" date="동지 사흘 전" time="밤, 해시 무렵" place="결계벽 너머 설원" scene="눈 속의 이형과 교전 중" omen="설랑 무리가 웅크린다" danger={["B4+"]} zones={[]} npcs={[]} pcName="{{user}}" pcPos="C4" pcVital={64} pcTaint="경미" pcFx="" fighters={["b_baek:A5:80:없음", "b_cheon:D3:55:경미:출혈"]} heat={1} enemies={["e_wolf:설랑 무리:B1:침:3/4", "e_bone:백골설귀:D1:변:5/5:노출"]} atk={["신기 화살에 맞춰 베기|보통", "부적 투척|어려움"]} def={["눈더미 뒤로|쉬움"]} aid={["협공|보통", "엄호|쉬움", "진정|보통"]} bonds={["baek:4:6:1"]} ties={["yo:3", "muk:2", "cheon:5", "ah:4"]} greed={12} pact="" mood="심통" dice="🎲 12 · 보통 · 성공" rift={1} rivalry={0} trouble={2} />
