@@ -71,6 +71,8 @@ function Seonbongstatus(props = {}) {
   const bondList = sbList(p.bonds);
   // ties: NPC와의 우정. 화면에 표시하지 않는 숨은 값.
   const hiddenTies = sbList(p.ties);
+  // stage: 스토리 진행 단계(§0~§8). 화면에 표시하지 않는 숨은 값.
+  const hiddenStage = sbStr(p.stage);
 
   const isBattle = phase === "ph_battle" || p.battle === true || p.battle === "true";
 
