@@ -21,7 +21,7 @@ const SB_MAPS = {
   m_wall: { name: "결계벽", img: "", cells: { A4: "high", E4: "high", B5: "safe", C5: "safe", D5: "safe", B4: "cover", D4: "cover", C1: "taint", B2: "taint", D2: "taint", A3: "rough", E3: "rough" } },
 };
 
-const SB_PORTRAIT = { baek: "", crow: "", yo: "", muk: "", cheon: "", ah: "", kang: "" };
+const SB_PORTRAIT = { baek: "", crow: "", yo: "", muk: "", cheon: "", ah: "", kang: "", yeon: "" };
 
 const SB_TERRAIN = {
   high: { label: "고지대", mark: "▲", color: "rgba(150,170,205,0.6)" },
@@ -33,7 +33,7 @@ const SB_TERRAIN = {
 };
 const SB_TERRAIN_KR = { 고지대: "high", 엄폐물: "cover", 엄폐: "cover", 험지: "rough", 탁기지대: "taint", 탁기: "taint", 시야차단: "fog", 안전: "safe", 거점: "safe" };
 
-const SB_NAME = { baek: "백일오", yo: "요현", muk: "하묵", cheon: "위천", ah: "주아령", kang: "강무열", crow: "까마귀 신" };
+const SB_NAME = { baek: "백일오", yo: "요현", muk: "하묵", cheon: "위천", ah: "주아령", kang: "강무열", yeon: "연사겸", crow: "까마귀 신" };
 const SB_TH = { 쉬움: 7, 보통: 11, 어려움: 15 };
 const SB_EASIER = { 어려움: "보통", 보통: "쉬움", 쉬움: "쉬움" };
 const SB_COLS = ["A", "B", "C", "D", "E"];
