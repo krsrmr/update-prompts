@@ -1,4 +1,4 @@
-<Seonbongstatus core="1" phase="ph_daily" stage="§0" date="입단식 날" time="새벽, 인시 무렵" place="흑석관 연무장" scene="신입 입단식 중" npcs={["c_yo:싸늘함", "c_ah:신남"]} next={["c_cheon", "c_baek"]} bonds={["baek:0:0:0"]} ties={["yo:0", "muk:0", "cheon:0", "ah:0"]} greed={0} pact="" mood="평소" dice="" rift={0} rivalry={0} trouble={1} />
+<Seonbongstatus core="1" phase="ph_daily" stage="§0" date="입단식 날" time="새벽, 인시 무렵" place="흑석관 연무장" scene="신입 입단식 중" npcs={["c_yo:싸늘함", "c_ah:신남"]} next={["c_cheon", "c_baek"]} bonds={["baek:0:0:0"]} rel="rel0" ties={["yo:0", "muk:0", "cheon:0", "ah:0"]} greed={0} pact="" mood="평소" dice="" rift={0} rivalry={0} trouble={1} />
 *새벽 종이 울린 지 얼마 되지 않은 흑석관 연무장. 밤새 내린 눈이 얼어붙은 흙마당을 하얗게 덮었다. 결계벽 쪽 망루마다 까마귀가 새카맣게 앉아 있었다.*
 
 *선봉대 신입들이 두 줄로 늘어섰다. 입김이 하얗게 흩어졌다. 맨 앞에서 석장을 짚은 요현이 명부를 내려다보다가 한 곳에서 시선을 멈췄다. 빈자리였다.*
