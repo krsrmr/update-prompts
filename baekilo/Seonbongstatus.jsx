@@ -76,7 +76,7 @@ function Seonbongstatus(props = {}) {
   if (mode === "view" && !got) {
     return (
       <div style={{ fontFamily: "sans-serif", fontSize: 12, color: "#888", padding: "4px 2px" }}>
-        {lost ? "상태창 값을 찾지 못했습니다." : "상태창 불러오는 중…"}
+        {lost ? "상태창 값을 찾지 못했습니다. (" + lost + ")" : "상태창 불러오는 중…"}
       </div>
     );
   }
@@ -555,8 +555,9 @@ function sbServe(live) {
 
 // view: 바깥 창의 창 목록에서 제 앞쪽 창들에 묻고, 가장 가까운 core의 값을 쓴다.
 function sbFind(setGot, setLost) {
+  // 바깥 창(parent · top)을 모두 쓴다. Sbprobe 2차 시험에서 어느 쪽으로 통했는지는 모른다.
   const g = sbGlobal();
-  const all = sbHosts(g);
+  const hosts = sbHosts(g);
   const id = String(Math.random()).slice(2);
   const indexIn = (h) => {
     let n = 0;
@@ -566,16 +567,11 @@ function sbFind(setGot, setLost) {
     }
     return -1;
   };
-  // 제 창 번호를 찾을 수 있는 바깥 창 하나만 쓴다. 못 찾으면 가장 가까운 바깥 창.
-  let pickH = all.length ? all[0] : null;
-  let pickMe = pickH ? indexIn(pickH) : -1;
-  for (let i = 1; i < all.length && pickMe < 0; i++) {
-    const m = indexIn(all[i]);
-    if (m >= 0) { pickH = all[i]; pickMe = m; }
-  }
-  const hosts = pickH ? [pickH] : [];
-  const mine = [pickMe];
+  const sizes = hosts.map((h) => { try { return h.length; } catch (e) { return -1; } });
+  const mine = hosts.map(indexIn);
+  const known = mine.findIndex((m) => m >= 0);
   let best = null;
+  let answers = 0;
   let settle = null;
   let tries = 0;
   let timer = null;
@@ -591,11 +587,14 @@ function sbFind(setGot, setLost) {
     try {
       const d = e && e.data;
       if (done || !d || d.sbq !== "ans" || d.id !== id || !d.data) return;
-      const me = mine[d.h];
-      if (me >= 0 && !(d.j < me)) return;
-      // 제 번호를 알면 앞쪽에서 가장 가까운 것, 모르면 가장 뒤의 것
+      answers += 1;
+      // 제 번호를 아는 바깥 창이 있으면 그 창의 답만, 제 앞쪽에서 가장 가까운 것을 쓴다.
+      if (known >= 0) {
+        if (d.h !== known || !(d.j < mine[known])) return;
+      }
+      // 제 번호를 모르면 가장 뒤의 것(최신 메시지)을 쓴다.
       if (!best || d.j > best.j) best = { j: d.j, data: d.data };
-      if (!settle) settle = setTimeout(finish, 250);
+      if (!settle) settle = setTimeout(finish, 300);
     } catch (err) {}
   };
   try { g.addEventListener("message", onAns); } catch (e) {}
@@ -608,13 +607,16 @@ function sbFind(setGot, setLost) {
       try { n = h.length; } catch (e) {}
       const end = mine[hi] >= 0 ? mine[hi] : n;
       for (let j = end - 1; j >= 0; j--) {
-        try { h[j].postMessage({ sbq: "ask", id: id, j: j, h: hi }, "*"); } catch (e) {}
+        try { if (h[j] !== g) h[j].postMessage({ sbq: "ask", id: id, j: j, h: hi }, "*"); } catch (e) {}
       }
     });
-    if (tries >= 12 && !best) {
+    if (tries === 20 && !best) {
+      // 8초 넘게 못 찾으면 진단 문구를 띄우고, 2초마다 계속 묻는다(1분까지).
+      setLost("바깥 창 " + hosts.length + " · 창 수 " + sizes.join("/") + " · 내 번호 " + mine.join("/") + " · 답 " + answers);
       if (timer) clearInterval(timer);
-      setLost(true);
+      timer = setInterval(ask, 2000);
     }
+    if (tries >= 50 && timer) clearInterval(timer);
   };
   ask();
   timer = setInterval(ask, 400);
