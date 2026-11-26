@@ -8,7 +8,7 @@
 //   date  : 상태창 날짜. 유저노트용 기록 줄에 들어간다
 // 추천 코너·성인 코너 상품은 맨 아래 YZ_PICKS · YZ_ADULT에서 고친다.
 // 장바구니는 이 화면 안에만 임시로 남는다(다시 열면 비어 있다).
-// 주문 뒤 완료 화면에 '유저노트용' 한 줄과 복사 버튼이 나온다(받은 물건을 오래 기억시키는 용도).
+// 주문 뒤 완료 화면에 '장기기억 인풋용' 한 줄과 복사 버튼이 나온다(유저노트·기억란에 붙여 받은 물건을 오래 기억시키는 용도).
 
 function Yamazon(props = {}) {
   const { theme = "", trend = [], wish = [], date = "" } = props;
@@ -287,8 +287,8 @@ function Yamazon(props = {}) {
               ) : null}
               {sent ? (
                 <div style={{ marginTop: 10, background: "#fff", border: "1px solid " + c.line, borderRadius: 12, padding: 12, textAlign: "left" }}>
-                  <div style={{ fontSize: 13, fontWeight: 800 }}>📌 유저노트용 <span style={{ fontSize: 10.5, fontWeight: 400, color: c.sub }}>장기 기억</span></div>
-                  <div style={{ fontSize: 11, color: c.sub, marginTop: 2 }}>마시로가 상자를 연 뒤에 유저노트에 붙여 넣으면, 받은 물건을 계속 기억해요.</div>
+                  <div style={{ fontSize: 13, fontWeight: 800 }}>📌 장기기억 인풋용 <span style={{ fontSize: 10.5, fontWeight: 400, color: c.sub }}>유저노트 · 기억란</span></div>
+                  <div style={{ fontSize: 11, color: c.sub, marginTop: 2 }}>{"마시로가 상자를 연 뒤에 유저노트 혹은 기억 > 기억 추가에 붙여 넣으면, 받은 물건을 계속 기억해요."}</div>
                   <textarea readOnly value={sent.memo} rows={3} onFocus={(e) => { try { e.target.select(); } catch (x) {} }} style={yzField({ marginTop: 8, fontSize: 12 })} />
                   <button type="button" onClick={() => { if (yzCopy(sent.memo)) setCopied(true); }}
                     style={yzBare({ marginTop: 8, width: "100%", padding: "8px 0", borderRadius: 999, border: "1px solid " + (copied ? c.ok : c.line), background: copied ? "#e8f6ec" : "#fff", color: copied ? c.ok : c.ink, fontSize: 13, fontWeight: 700, textAlign: "center" })}>
