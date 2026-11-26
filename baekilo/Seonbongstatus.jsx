@@ -4,7 +4,7 @@
 //
 // [전투 화면]
 //   5×5 맵(A~E열, 1~5행. 1행 적 방면 → 5행 아군 후방), 지형 6종, 장판(danger), 지형 변경(zones)
-//   점을 누르면 인물 상세가 펼쳐진다. 행동 칸: 이동(선택) + 공격/수비/도움 → 대상 → 🎲 → 한 줄 덧붙이기 → 보내기
+//   점을 누르면 인물 상세가 펼쳐진다. 행동 값 형식: "이름|난이도|설명"(설명은 없어도 됨, 행동을 누르면 아래에 뜬다). 행동 칸: 이동(선택) + 공격/수비/도움 → 대상 → 🎲 → 한 줄 덧붙이기 → 보내기
 //
 // [보내는 글] (로어북 키워드 ⚔ 문서가 이 글을 읽고 서술한다)
 //   ⚔ 이동 C3 · 공격 · 신기 화살 → 설랑 무리 · 🎲12 · 보통이면 실패 / 쉬움이면 성공 · 덧붙임: 눈언덕에서 쏜다
@@ -361,6 +361,9 @@ function Seonbongstatus(props = {}) {
                 {a.name} <span style={small}>({a.diff})</span>
               </button>
             ))}
+            {pick && pick.desc ? (
+              <div style={{ ...small, marginTop: 4, padding: "4px 8px", background: "rgba(0,0,0,0.05)", borderLeft: "3px solid #888", borderRadius: 2 }}>{pick.desc}</div>
+            ) : null}
             {pick && needTarget ? (
               <div style={{ marginTop: 4 }}>
                 <div style={small}>{tab === "도움" ? "누구를 도울까요?" : "누구를 노릴까요?"}</div>
@@ -692,7 +695,8 @@ function sbDanger(list) {
 function sbAction(v) {
   const a = String(v).split("|");
   const diff = (a[1] || "보통").trim();
-  return { name: (a[0] || "").trim(), diff: SB_TH[diff] ? diff : "보통" };
+  const desc = a.slice(2).join("|").trim().slice(0, 40);
+  return { name: (a[0] || "").trim(), diff: SB_TH[diff] ? diff : "보통", desc: desc };
 }
 
 function sbJudge(n, diff) {
