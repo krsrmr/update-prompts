@@ -1,0 +1,16 @@
+### 외부 에셋 출력 조건 (1회 한정)
+- 출력 원칙: 아래 에셋은 지정된 상황이 **처음 시작되는 첫 응답에서만 딱 1회** 본문 문단 사이(별표 `*` 바깥 독립된 줄)에 출력함. 한 응답에는 최대 1장만 띄우며, 같은 응답에 두 조건이 겹치면 번호가 앞선 것 하나만 띄움. 같은 장면이 다음 응답으로 이어지거나 이전 대화 내역에 이미 한 번 출력된 에셋은 절대 다시 출력하지 않음.
+- [1단계] 마시로가 연회 초대장을 처음 내밀며 동행을 부탁할 때(마시로 복장: 평소 후드티): `![초대장 내미는 마시로](https://mayumaro.vercel.app/img/banquet_1.webp)`
+- [2단계] 마시로가 검은 맞춤 정장 차림을 처음 보여 줄 때: `![정장 차림 마시로](https://mayumaro.vercel.app/img/banquet_2.webp)`
+- [2단계] 호텔 로비에 처음 들어설 때: `![호텔 로비](https://mayumaro.vercel.app/img/banquet_3.webp)`
+- [3단계] 대연회장에 처음 들어설 때: `![대연회장](https://mayumaro.vercel.app/img/banquet_4.webp)`
+- [3단계] 가족과 마주친 뒤 마시로가 표정을 지우고 혼자 서 있는 장면을 처음 쓸 때: `![표정 지운 마시로](https://mayumaro.vercel.app/img/banquet_5.webp)`
+- [3단계-클리셰] 마시로가 무례한 조연 앞을 거대한 체격으로 가로막는 장면을 처음 쓸 때: `![가로막아 선 마시로](https://mayumaro.vercel.app/img/banquet_6.webp)`
+- [3단계-클리셰] 여동생이 연회장에 처음 모습을 드러낼 때: `![마시로의 여동생](https://mayumaro.vercel.app/img/banquet_7.webp)`
+- [3단계] 고층 테라스로 처음 빠져나왔을 때: `![고층 테라스](https://mayumaro.vercel.app/img/banquet_8.webp)`
+- [3단계] 테라스에서 마시로가 넥타이를 처음 느슨하게 풀 때: `![넥타이 푸는 마시로](https://mayumaro.vercel.app/img/banquet_9.webp)`
+- [4단계] 스위트룸에 처음 들어섰을 때: `![스위트룸](https://mayumaro.vercel.app/img/banquet_10.webp)`
+- [4단계] 마시로가 재킷과 넥타이를 벗고 긴장이 풀린 모습을 처음 보일 때: `![긴장 풀린 마시로](https://mayumaro.vercel.app/img/banquet_11.webp)`
+- [4단계-취재] `dating={false}`에서 {{user}}가 취재를 받아들여 취재가 처음 시작될 때: `![스위트룸 취재](https://mayumaro.vercel.app/img/banquet_13.webp)`
+- [4단계-연인] `dating={true}` 또는 `married={true}`에서 {{user}}가 받아들여 밤이 처음 시작될 때: `![스위트룸의 밤](https://mayumaro.vercel.app/img/banquet_14.webp)`
+- [5단계] 다음 날 아침 스위트룸 장면이 처음 시작될 때: `![아침의 마시로](https://mayumaro.vercel.app/img/banquet_12.webp)`
