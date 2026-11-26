@@ -4,13 +4,15 @@
 //
 // [전투 화면]
 //   5×5 맵(A~E열, 1~5행. 1행 적 방면 → 5행 아군 후방), 지형 6종, 장판(danger), 지형 변경(zones)
-//   점을 누르면 인물 상세가 펼쳐진다. 행동 값 형식: "이름|난이도|설명"(설명은 없어도 됨, 행동을 누르면 아래에 뜬다). 행동 칸: 이동(선택) + 공격/수비/도움 → 대상 → 🎲 → 한 줄 덧붙이기 → 보내기
+//   점을 누르면 인물 상세가 펼쳐진다. 행동 값 형식: "이름|난이도|설명"(설명은 없어도 됨, 행동을 누르면 아래에 뜬다). 행동 칸: 이동(선택) + 공격/수비/도움 → 대상 → 🎲 → 상세 지문·대사(선택) → 보내기
 //
 // [보내는 글] (로어북 키워드 ⚔ 문서가 이 글을 읽고 서술한다)
-//   ⚔ 이동 C3 · 공격 · 신기 화살 → 설랑 무리 · 🎲12 · 보통이면 실패 / 쉬움이면 성공 · 덧붙임: 눈언덕에서 쏜다
+//   ⚔ 이동 C3 · 공격 · 신기 화살 → 설랑 무리 · 🎲12 · 보통이면 실패 / 쉬움이면 성공
+//   *눈언덕에서 활을 당긴다.*   ← 상세 지문을 썼을 때만
+//   「왼쪽 맡아!」              ← 대사를 썼을 때만
 //   - 주사위(1d20)는 이 컴포넌트가 굴린다. 기준: 쉬움 7 · 보통 11 · 어려움 15 이상 성공,
 //     기준보다 1~5 모자라면 아슬아슬, 6 이상 모자라면 실패, 20은 대성공, 1은 실패.
-//   - 한 단계 쉬운 난이도의 결과도 함께 보낸다. 덧붙임이 보정할 만하면 AI가 쉬운 쪽을 고른다.
+//   - 한 단계 쉬운 난이도의 결과도 함께 보낸다. 상세 지문이 보정할 만하면 AI가 쉬운 쪽을 고른다.
 //
 // [이미지] SB_MAPS의 img, SB_PORTRAIT의 따옴표 안에 이미지 주소를 넣는다. 비워 두면 색과 글자로 대신한다.
 
@@ -58,7 +60,8 @@ function Seonbongstatus(props = {}) {
   const [focus, setFocus] = H.s(null);
   const [roll, setRoll] = H.s(null);
   const [rolling, setRolling] = H.s(false);
-  const [note, setNote] = H.s("");
+  const [narr, setNarr] = H.s("");
+  const [line2, setLine2] = H.s("");
   const [sent, setSent] = H.s("");
   const [warn, setWarn] = H.s("");
   const timer = H.r ? H.r(null) : { current: null };
@@ -232,9 +235,12 @@ function Seonbongstatus(props = {}) {
       if (easy === pick.diff || sbJudge(roll, easy) === base) res += pick.diff + " " + base;
       else res += pick.diff + "이면 " + base + " / " + easy + "이면 " + sbJudge(roll, easy);
       parts.push(res);
-      const extra = String(note || "").replace(/\s+/g, " ").trim().slice(0, 80);
-      if (extra) parts.push("· 덧붙임: " + extra);
-      return parts.join(" ");
+      const out = [parts.join(" ")];
+      const n = String(narr || "").trim().replace(/^\*+|\*+$/g, "").trim();
+      const d = String(line2 || "").trim().replace(/^[「"']+|[」"']+$/g, "").trim();
+      if (n) out.push("*" + n.replace(/\n+/g, " ") + "*");
+      if (d) out.push("「" + d.replace(/\n+/g, " ") + "」");
+      return out.join("\n");
     };
 
     const doSend = () => {
@@ -390,13 +396,22 @@ function Seonbongstatus(props = {}) {
             ) : null}
             {pick && roll !== null && !rolling ? (
               <div style={{ marginTop: 6 }}>
+                <div style={small}>상세 지문 (비워도 됨)</div>
+                <textarea
+                  value={narr}
+                  disabled={!!sent}
+                  rows={3}
+                  placeholder="예) 부적을 이로 물어 뜯으며 눈언덕으로 미끄러져 내려간다."
+                  onChange={(e) => setNarr(e.target.value)}
+                  style={{ width: "100%", boxSizing: "border-box", padding: "6px 8px", fontSize: 13, border: "1px solid #aaa", borderRadius: 4, resize: "vertical", fontFamily: "inherit" }}
+                />
+                <div style={{ ...small, marginTop: 4 }}>대사 (비워도 됨)</div>
                 <input
                   type="text"
-                  value={note}
+                  value={line2}
                   disabled={!!sent}
-                  maxLength={80}
-                  placeholder="한 줄 덧붙이기 (스킬·지형·약점, 비워도 됨)"
-                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="예) 주아령, 왼쪽 맡아!"
+                  onChange={(e) => setLine2(e.target.value)}
                   style={{ width: "100%", boxSizing: "border-box", padding: "6px 8px", fontSize: 13, border: "1px solid #aaa", borderRadius: 4 }}
                 />
                 <button type="button" onClick={doSend} disabled={!!sent} style={{ marginTop: 6, width: "100%", padding: "7px 0", fontSize: 14, cursor: "pointer", borderRadius: 4, border: "1px solid #3d6fb6", background: sent ? "#ddd" : "#3d6fb6", color: sent ? "#666" : "#fff" }}>
@@ -413,7 +428,6 @@ function Seonbongstatus(props = {}) {
   }
 
   /* ───────── 일상 화면 ───────── */
-  const list = sbList(p.choices);
 
   return (
     <div style={box}>
@@ -477,21 +491,6 @@ function Seonbongstatus(props = {}) {
       <Clock name="다툼" value={p.rivalry} />
       <Clock name="사고" value={p.trouble} />
 
-      {list.length > 0 ? (
-        <div>
-          <div style={line} />
-          {list.map((c, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => sbSend(String(c), () => {})}
-              style={{ display: "block", width: "100%", textAlign: "left", margin: "4px 0", padding: "6px 8px", fontSize: 13, background: "#fff", border: "1px solid #aaa", borderRadius: 4, cursor: "pointer" }}
-            >
-              {String(c)}
-            </button>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }
