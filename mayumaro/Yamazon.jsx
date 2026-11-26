@@ -5,11 +5,13 @@
 //   theme : 트렌드 코너 제목 "日本語|한국어"
 //   trend : 트렌드 상품 목록. 항목 하나 = "이모지|상품명JA|상품명KO|가격|한 줄 소개KO"
 //   wish  : 마시로의 위시리스트. 항목 하나 = "이모지|상품명JA|상품명KO|가격|메모JA|메모KO"
+//   date  : 상태창 날짜. 유저노트용 기록 줄에 들어간다
 // 추천 코너·성인 코너 상품은 맨 아래 YZ_PICKS · YZ_ADULT에서 고친다.
 // 장바구니는 이 화면 안에만 임시로 남는다(다시 열면 비어 있다).
+// 주문 뒤 완료 화면에 '유저노트용' 한 줄과 복사 버튼이 나온다(받은 물건을 오래 기억시키는 용도).
 
 function Yamazon(props = {}) {
-  const { theme = "", trend = [], wish = [] } = props;
+  const { theme = "", trend = [], wish = [], date = "" } = props;
   const [tab, setTab] = useState(props._tab || "pick");
   const [adultOk, setAdultOk] = useState(!!props._age);
   const [gate, setGate] = useState(false);
@@ -24,6 +26,7 @@ function Yamazon(props = {}) {
   const [note, setNote] = useState("");
   const [sent, setSent] = useState(null);
   const [toast, setToast] = useState("");
+  const [copied, setCopied] = useState(false);
   const scrollRef = useRef(null);
   const toastTimer = useRef(null);
 
@@ -73,7 +76,8 @@ function Yamazon(props = {}) {
     if (!lines.length) return;
     const text = yzOrderText(lines, ship, named, card, note, total);
     const how = yzSend(text);
-    setSent({ no: "YZ-" + String(Math.floor(100000 + Math.random() * 900000)), text, how, ship, named });
+    setSent({ no: "YZ-" + String(Math.floor(100000 + Math.random() * 900000)), text, how, ship, named, memo: yzMemoText(lines, named, date) });
+    setCopied(false);
     setCart({});
     setCard("");
     setNote("");
@@ -279,6 +283,17 @@ function Yamazon(props = {}) {
                   {sent.how !== "sent" ? (
                     <textarea readOnly value={sent.text} rows={5} onFocus={(e) => { try { e.target.select(); } catch (x) {} }} style={yzField({ marginTop: 8, fontSize: 12 })} />
                   ) : null}
+                </div>
+              ) : null}
+              {sent ? (
+                <div style={{ marginTop: 10, background: "#fff", border: "1px solid " + c.line, borderRadius: 12, padding: 12, textAlign: "left" }}>
+                  <div style={{ fontSize: 13, fontWeight: 800 }}>📌 유저노트용 <span style={{ fontSize: 10.5, fontWeight: 400, color: c.sub }}>장기 기억</span></div>
+                  <div style={{ fontSize: 11, color: c.sub, marginTop: 2 }}>마시로가 상자를 연 뒤에 유저노트에 붙여 넣으면, 받은 물건을 계속 기억해요.</div>
+                  <textarea readOnly value={sent.memo} rows={3} onFocus={(e) => { try { e.target.select(); } catch (x) {} }} style={yzField({ marginTop: 8, fontSize: 12 })} />
+                  <button type="button" onClick={() => { if (yzCopy(sent.memo)) setCopied(true); }}
+                    style={yzBare({ marginTop: 8, width: "100%", padding: "8px 0", borderRadius: 999, border: "1px solid " + (copied ? c.ok : c.line), background: copied ? "#e8f6ec" : "#fff", color: copied ? c.ok : c.ink, fontSize: 13, fontWeight: 700, textAlign: "center" })}>
+                    {copied ? "✓ 복사됐어요" : "복사하기"}
+                  </button>
                 </div>
               ) : null}
               <YzBigBtn onClick={() => { setTab("pick"); go("shop"); }} ja="トップへ戻る" ko="처음으로" light={true} />
@@ -597,6 +612,33 @@ function yzOrderText(lines, ship, named, card, note, total) {
   let text = [head].concat(body).concat([tail.join(" · ")]).join("\n");
   if (String(note).trim()) text += "\n\n" + String(note).trim();
   return text;
+}
+
+function yzMemoText(lines, named, date) {
+  const m = String(date || "").match(/(\d{1,2})\D+(\d{1,2})\D*$/);
+  const d = m ? Number(m[1]) + "/" + Number(m[2]) + " " : "";
+  const list = lines.map((l) => (l.it.ko || l.it.ja) + (l.n > 1 ? " ×" + l.n : "")).join(", ");
+  const who = named ? "{{user}}가 야마존으로 마시로에게 보낸 선물: " : "{{user}}가 야마존으로 마시로에게 익명으로 보낸 선물(마시로는 보낸 사람을 모른다): ";
+  return "[야마존 선물] " + d + who + list + ". 마시로의 집에 있고, 마시로가 쓰고 있다.";
+}
+
+function yzCopy(text) {
+  let ok = false;
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    ok = document.execCommand("copy");
+    document.body.removeChild(ta);
+  } catch (e) {}
+  if (!ok) {
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); ok = true; } } catch (e) {}
+  }
+  return ok;
 }
 
 function yzSend(text) {
