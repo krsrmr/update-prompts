@@ -1,4 +1,5 @@
-// 필요 훅: useState, useRef
+// 필요 훅: useState, useRef (react)
+// 훅은 맨 위 Yamazon 안에서만 쓴다(유니챗은 보조 컴포넌트 안의 훅을 못 찾을 때가 있음).
 // 필요 기능: sendMessage (없으면 복사로 대신함)
 // !야마존: 통판 사이트 'ヤマゾン'. 상품을 장바구니에 담고 결제하면 주문 내용을 {{user}}의 메시지로 보낸다.
 // props (봇이 채우는 칸)
@@ -31,6 +32,10 @@ function Yamazon(props = {}) {
   const scrollRef = useRef(null);
   const toastTimer = useRef(null);
   const savedScroll = useRef(0);
+  const galRef = useRef(null);
+  const [pQty, setPQty] = useState(1);
+  const [pOpt, setPOpt] = useState(-1);
+  const [pSlide, setPSlide] = useState(0);
 
   const c = YZ_COLORS;
   const items = yzBuild(trend, wish);
@@ -65,6 +70,10 @@ function Yamazon(props = {}) {
   const openItem = (id) => {
     try { if (view === "shop" && scrollRef.current) savedScroll.current = scrollRef.current.scrollTop; } catch (e) {}
     setItemId(id);
+    setPQty(1);
+    setPOpt(-1);
+    setPSlide(0);
+    try { if (galRef.current) galRef.current.scrollLeft = 0; } catch (e) {}
     go("item");
   };
   const backToShop = () => {
@@ -194,7 +203,8 @@ function Yamazon(props = {}) {
             </div>
           ) : view === "item" && cur ? (
             <YzItemPage key={cur.id} it={cur} items={items} bought={bought.indexOf(cur.id) >= 0}
-              onBack={backToShop} onAdd={addCart} onOpen={openItem} />
+              onBack={backToShop} onAdd={addCart} onOpen={openItem}
+              qty={pQty} setQty={setPQty} optIdx={pOpt} setOpt={setPOpt} slide={pSlide} setSlide={setPSlide} gal={galRef} />
           ) : view === "cart" ? (
             <div style={{ padding: "10px 10px 16px" }}>
               <YzBack label="買い物を続ける" onClick={backToShop} />
@@ -356,13 +366,10 @@ function Yamazon(props = {}) {
 
 /* ───────── 상품 상세 페이지 ───────── */
 
-function YzItemPage({ it, items, bought, onBack, onAdd, onOpen }) {
+function YzItemPage({ it, items, bought, onBack, onAdd, onOpen, qty, setQty, optIdx, setOpt, slide, setSlide, gal }) {
   const c = YZ_COLORS;
   const f = yzInfo(it);
-  const [qty, setQty] = useState(1);
-  const [opt, setOpt] = useState(f.opts ? f.opts.def : 0);
-  const [slide, setSlide] = useState(0);
-  const gal = useRef(null);
+  const opt = optIdx >= 0 ? optIdx : (f.opts ? f.opts.def : 0);
   const adult = it.cat === "adult";
   const optLabel = f.opts ? f.opts.list[opt] : "";
   const slides = [["pack", "パッケージ"], ["item", "商品イメージ"], ["ship", adult ? "お届け時の梱包" : "ギフト包装"]];
