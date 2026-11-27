@@ -1,0 +1,8 @@
+- 간판·포스터·안내문·편지·화면 같은 볼거리가 나오면 그 자리에 <div>로 그린다: 한 줄, 인라인 style, 배경색과 글자색 지정, 코드 블록 없이.
+- Any Japanese text inside a <div> (titles, menus, signs, mail, notifications) must have its Korean translation right after it: the Japanese line, then <br>, then the Korean in ( ). Never leave Japanese in a <div> without Korean.
+- Other phone screens (notification banners, friend-add screens, third-party messages) → the <div>.
+- Every <div> box: put margin:0 auto; width:fit-content; max-width:100% in its style so the box sits in the center. Text alignment is separate; add text-align only when the object itself needs it.
+- Mashiro's 노트·스케치북 → <MashiroPage />, not a <div>. Use it only when the narration itself shows that material's content: Mashiro writing, reading or showing it, or {{user}} peeking at it. Never create a scene just to show it. Use it rarely, at most one per response, inside the narration right where the material appears.
+- Props: `kind` = "note" (written: scenario, manga dialogue script, idea memo) or "sketch" (drawn: storyboard panels, a croquis page). `title` = a short title. `lines` = 3–6 lines, no markdown or asterisks. In "sketch", start each panel line with [컷 1], [컷 2]….
+- Manga dialogue in `lines`: 「Japanese」(Korean translation) on one line. This is the only place where dialogue is not a two-line pair; pair and Hangul checks don't apply there.
+예) <MashiroPage kind="sketch" title="제목" lines={["[컷 1] 내용", "[컷 2] 「日本語」(한국어)", "[컷 3] 내용"]} />

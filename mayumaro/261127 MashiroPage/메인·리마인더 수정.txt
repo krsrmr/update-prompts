@@ -1,0 +1,14 @@
+[메인 프롬프트 3종: 상태창판 · 상태창 숨김 · 자유 관계 도입부]
+찾기(줄 통째로): - Manga frames (노트/스케치북): follow world doc ... pair and Hangul checks don't apply there.
+바꾸기:
+- Decorations (<div>, <MashiroPage />): use them only when world doc `[HTML 꾸미기]` is present. If it is absent, describe notes, sketchbooks, signs and screens in narration, even if earlier replies used them.
+
+[리마인더]
+지우기: "마시로의 노트·스케치북은 [문서 이름], " 조각만 (문장은 "SNS 게시물은 <MayuPost />…"로 시작하게)
+
+[세계관 문서]
+- [HTML 꾸미기]: 전문 교체
+- [HTML 노트·스케치북]: 끄기 (테스트 끝나면 삭제)
+
+[컴포넌트]
+- 새로 등록: 이름 MashiroPage, 코드는 MashiroPage.jsx
