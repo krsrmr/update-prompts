@@ -1,0 +1,9 @@
+[메인 프롬프트 3종] 맨 아래 섹션 통째로 삭제:
+# Visual Element Rendering Rule
+- Any Japanese text inside a <div> ...
+- Other phone screens ...
+- Every <div> box: ...
+
+[리마인더] 볼거리 줄 앞 문장만 삭제:
+찾기: 간판·포스터·안내문·편지·화면 같은 볼거리가 나오면 그 자리에 <div>로 그린다: 한 줄, 인라인 style, 배경색과 글자색 지정, 코드 블록 없이. 마시로의 노트·스케치북은
+바꾸기: 마시로의 노트·스케치북은
